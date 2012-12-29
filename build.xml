@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="cookandroid" default="help">
+
+    <path id="jars">
+        <fileset dir="libs" includes="**/*.jar"/>
+    </path>
+
+    <target name="-compile">
+        <mkdir dir="bin/classes"/>
+        <javac srcdir="src" destdir="bin/classes" classpathref="jars" includeantruntime="false" debug="on"/>
+    </target>
+
+    <target name="asm" depends="-compile">
+        <jar destfile="bin/cookandroid.jar"
+            basedir="bin/classes"
+            filesetmanifest="skip"
+            includes="org/tsg/android/asm/*">
+
+            <zipgroupfileset dir="libs" includes="*.jar"/>
+
+            <manifest>
+                <attribute name="Main-Class" value="org.tsg.android.asm.Main"/>
+            </manifest>
+        </jar>
+    </target>
+
+    <target name="api" depends="-compile">
+        <jar destfile="bin/cookandroid-api.jar"
+            basedir="bin/classes"
+            filesetmanifest="skip"
+            includes="org/tsg/android/api/*">
+        </jar>
+    </target>
+
+    <target name="clean">
+        <delete dir="bin" />
+    </target>
+</project>
