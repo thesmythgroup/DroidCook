@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="imported" default="help">
+    <target name="-post-compile">
+        <echo>Transforming class files.</echo>
+        <java classname="org.tsg.android.asm.Main" fork="true" failonerror="true">
+            <arg value="."/>
+            <classpath>
+              <pathelement path="bin/classes"/>
+              <pathelement location="libs/asm-4.1.jar"/>
+              <pathelement location="libs/asm-util-4.1.jar"/>
+            </classpath>
+        </java>
+    </target>
+</project>
