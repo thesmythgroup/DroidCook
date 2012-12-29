@@ -32,6 +32,16 @@
         </jar>
     </target>
 
+    <target name="build" depends="asm, api"/>
+
+    <target name="install" depends="build">
+        <echo>Copying assets to ${project}</echo>
+        <mkdir dir="${project}/compile-libs"/>
+        <copy file="bin/cookandroid.jar" todir="${project}/compile-libs" overwrite="true" />
+        <copy file="bin/cookandroid-api.jar" todir="${project}/libs" overwrite="true" />
+        <copy file="cook_rules.xml" todir="${project}/" overwrite="true" />
+    </target>
+
     <target name="clean">
         <delete dir="bin" />
     </target>
