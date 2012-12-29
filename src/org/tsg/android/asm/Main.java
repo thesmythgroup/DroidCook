@@ -8,9 +8,13 @@ import java.io.PrintWriter;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.Attribute;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.FieldVisitor;
+import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.util.TraceClassVisitor;
 
@@ -58,6 +62,34 @@ public class Main extends ClassVisitor implements Opcodes {
 		mVisitor.visitAnnotation("Lorg/tsg/android/api/Annotations$NoTransform;", true);
 	}
 
+	public void visitSource(String source, String debug) {
+		mVisitor.visitSource(source, debug);
+	}
+
+	public void visitOuterClass(String owner, String name, String desc) {
+		mVisitor.visitOuterClass(owner, name, desc);
+	}
+
+	public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
+		return mVisitor.visitAnnotation(desc, visible);
+	}
+
+	public void visitAttribute(Attribute attr) {
+		mVisitor.visitAttribute(attr);
+	}
+
+	public void visitInnerClass(String name, String outerName, String innerName, int access) {
+		mVisitor.visitInnerClass(name, outerName, innerName, access);
+	}
+
+	public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
+		return mVisitor.visitField(access, name, desc, signature, value);
+	}
+
+	public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+		return mVisitor.visitMethod(access, name, desc, signature, exceptions);
+	}
+
 	public void visitEnd() {
 		mVisitor.visitEnd();
 	}
@@ -86,10 +118,14 @@ public class Main extends ClassVisitor implements Opcodes {
 
 	public static void main(String[] args) throws IOException {
 
-		boolean debug = true;
+		boolean debug = false;
 
 		if (args.length == 0) {
 			throw new RuntimeException("usage: Main [path]");
+		}
+
+		if (args.length == 2 && "-debug".equals(args[1])) {
+			debug = true;
 		}
 
 		final List<File> clsFiles = new ArrayList<File>();
