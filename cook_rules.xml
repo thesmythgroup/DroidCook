@@ -2,13 +2,8 @@
 <project name="imported" default="help">
     <target name="-post-compile">
         <echo>Transforming class files.</echo>
-        <java classname="org.tsg.android.asm.Main" fork="true" failonerror="true">
-            <arg value="."/>
-            <classpath>
-              <pathelement path="bin/classes"/>
-              <pathelement location="libs/asm-4.1.jar"/>
-              <pathelement location="libs/asm-util-4.1.jar"/>
-            </classpath>
+        <java jar="compile-libs/cookandroid.jar" fork="true" failonerror="true">
+            <arg value="bin/classes"/>
         </java>
     </target>
 </project>
