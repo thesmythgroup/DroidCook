@@ -4,6 +4,7 @@
         <echo>Transforming class files.</echo>
         <java jar="compile-libs/cookandroid.jar" fork="true" failonerror="true">
             <arg value="bin/classes"/>
+            <arg value="-debug"/>
         </java>
     </target>
 </project>

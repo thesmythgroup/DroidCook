@@ -31,6 +31,12 @@ public final class Annotations {
 
 	@Target(ElementType.METHOD)
 	@Retention(RetentionPolicy.CLASS)
+	public @interface OnClick {
+		int[] value();
+	}
+
+	@Target(ElementType.METHOD)
+	@Retention(RetentionPolicy.CLASS)
 	public @interface UiThread { }
 
 	@Target(ElementType.METHOD)

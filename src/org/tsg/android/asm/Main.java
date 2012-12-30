@@ -16,6 +16,7 @@ import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.util.ASMifier;
 import org.objectweb.asm.util.TraceClassVisitor;
 
 public class Main extends ClassVisitor implements Opcodes {
@@ -23,12 +24,12 @@ public class Main extends ClassVisitor implements Opcodes {
 	private enum ClsVisitor {
 		ANDROID_APP_ACTIVITY;
 
-		public static ClassVisitor getVisitorFor(String name, ClassVisitor visitor, Details details) {
+		public static ClassVisitor getVisitorFor(String name, ClassVisitor visitor, Details details, File file) {
 			try {
 				ClsVisitor cls = ClsVisitor.valueOf(name.replace("/", "_").toUpperCase());
 				switch (cls) {
 				case ANDROID_APP_ACTIVITY:
-					return new ClassActivity(visitor, details);
+					return new ClassActivity(visitor, details, file);
 				default:
 					System.out.println("TODO Implement ClassVisitor for " + name);
 					return null;
@@ -39,20 +40,22 @@ public class Main extends ClassVisitor implements Opcodes {
 		}
 	}
 
+	private File mFile;
 	private ClassVisitor mVisitor;
 	private Details mDetails;
 
-	public Main(ClassVisitor cv, Details details) {
+	public Main(ClassVisitor cv, Details details, File file) {
 		super(ASM4, cv);
 		mVisitor = cv;
 		mDetails = details;
+		mFile = file;
 	}
 
 	/**
 	 * Match superName against known class handlers
 	 */
 	public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-		ClassVisitor visitor = ClsVisitor.getVisitorFor(superName, mVisitor, mDetails);
+		ClassVisitor visitor = ClsVisitor.getVisitorFor(superName, mVisitor, mDetails, mFile);
 		if (visitor != null) {
 			System.out.println(name);
 			mVisitor = visitor;
@@ -158,7 +161,7 @@ public class Main extends ClassVisitor implements Opcodes {
 				cv = new TraceClassVisitor(cv, new PrintWriter(System.out, true));
 			}
 
-			cv = new Main(cv, details);
+			cv = new Main(cv, details, file);
 			cr.accept(cv, 0);
 
 			// write transformed class out
