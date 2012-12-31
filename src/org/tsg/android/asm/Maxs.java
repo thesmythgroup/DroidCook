@@ -4,36 +4,23 @@ public class Maxs {
 	private int mStack;
 	private int mLocals;
 
-	public void incStack() {
-		incStack(1);
-	}
-
-	public void incStack(int n) {
-		mStack += n;
-	}
-
-	public void incLocals() {
-		incLocals(1);
-	}
-
-	public void incLocals(int n) {
-		mLocals += n;
-	}
-
-	public void incAll() {
-		incAll(1);
-	}
-
-	public void incAll(int n) {
-		mStack += n;
-		mLocals += n;
-	}
-
 	public int getStack() {
 		return mStack;
 	}
 
+	public void setStack(int n) {
+		if (n > mStack) {
+			mStack = n;
+		}
+	}
+
 	public int getLocals() {
 		return mLocals;
+	}
+
+	public void setLocals(int n) {
+		if (n > mLocals) {
+			mLocals = n;
+		}
 	}
 }

@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="imported" default="help">
+<project name="droidcook" default="help">
     <target name="-post-compile">
         <echo>Transforming class files.</echo>
-        <java jar="compile-libs/cookandroid.jar" fork="true" failonerror="true">
+        <java jar="compile-libs/droidcook.jar" fork="true" failonerror="true">
             <arg value="bin/classes"/>
+            <!-- Additional args available
             <arg value="-debug"/>
+            <arg value="-asmifier"/>
+          	-->
         </java>
     </target>
 </project>

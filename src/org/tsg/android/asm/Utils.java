@@ -12,14 +12,47 @@ public final class Utils implements Opcodes {
 
 	private Utils() { }
 
-	public static void newAnonymousInnerOnClick(String className, String methodName, File file) {
-		String anonName = className + "$1";
+	public static String getFileName(String className) {
+		int i = className.lastIndexOf("/");
+		return className.substring(i+1, className.length()) + ".class";
+	}
+
+	public static String nextInnerClassName(File file, String className) {
+		int i = 1;
+		String fileName = file.getName().replace(".class", "");
+		for (File f : file.getParentFile().listFiles()) {
+			String name = f.getName().replace(".class", "");
+			if (name.startsWith(fileName) && name.contains("$")) {
+				try {
+					int j = Integer.parseInt(name.split("\\$")[1]);
+					if (j > i) {
+						i = j;
+					}
+				} catch (Exception e) {
+					continue;
+				}
+			}
+		}
+		return className + "$" + (i + 1);
+	}
+
+	public static String nextInnerClassName(String name) {
+		if (!name.contains("$")) {
+			throw new RuntimeException("Did not receive anonymous inner name: " + name);
+		}
+		String[] sp = name.split("\\$");
+		int i = Integer.parseInt(sp[1]);
+		return sp[0] + "$" + (i + 1);
+	}
+
+	public static void newAnonymousInnerOnClick(String className, String anonName, String methodName, File file) {
+		File inner = new File(file.getParentFile(), getFileName(anonName));
 
 		ClassWriter cw = new ClassWriter(0);
 		MethodVisitor mv;
 
 		cw.visit(V1_6, ACC_SUPER, anonName, null, "java/lang/Object", new String[] {"android/view/View$OnClickListener"});
-		cw.visitAnnotation("Lorg/tsg/android/api/Annotations$NoTransform;", true);
+		// cw.visitAnnotation("Lorg/tsg/android/api/Annotations$NoTransform;", true);
 
 		// cw.visitSource("MainActivity.java", null);
 
@@ -69,8 +102,6 @@ public final class Utils implements Opcodes {
 		cw.visitEnd();
 
 		try {
-			File inner = new File(file.getParentFile(), file.getName().replace(".class", "$1.class"));
-
 			BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(inner));
 			bos.write(cw.toByteArray());
 			bos.flush();

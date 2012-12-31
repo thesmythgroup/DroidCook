@@ -1,6 +1,6 @@
-# CookAndroid
+# DroidCook
 
-CookAndroid is a bytecode manipulation library for injecting android boilerplate code. How it works:
+DroidCook is a bytecode manipulation library for injecting android boilerplate code. How it works:
 
 * Annotate classes, methods, and fields.
 * During post-compile of a build (before conversion to dex format), annotations will be read from compiled java classes and be used to inject boilerplate into the class file.
@@ -12,8 +12,8 @@ Currently ANT only. Jars are not yet being provided.
 ### Quick
 
 ```bash
-$ git clone git@github.com:thesmythgroup/CookAndroid.git
-$ cd CookAndroid
+$ git clone git@github.com:thesmythgroup/DroidCook.git
+$ cd DroidCook
 $ ant -Dproject=/home/user/workspace/projectroot install
 ```
 
@@ -38,19 +38,19 @@ Inspect the `-post-compile` output which should show class transformations that 
 ### Not So Quick
 
 ```bash
-$ git clone git@github.com:thesmythgroup/CookAndroid.git
-$ cd CookAndroid
+$ git clone git@github.com:thesmythgroup/DroidCook.git
+$ cd DroidCook
 $ ant asm api
 ```
 
-This builds two jars, `cookandroid.jar` and `cookandroid-api.jar`. The first is the bytecode transformer that should run during post-compile. The second provides the annotations api and should be included in an android project like any other library.
+This builds two jars, `DroidCook.jar` and `DroidCook-api.jar`. The first is the bytecode transformer that should run during post-compile. The second provides the annotations api and should be included in an android project like any other library.
 
 Copy the assets to android project:
 
 ```bash
 $ mkdir $PROJECT/compile-libs
-$ cp bin/cookandroid.jar $PROJECT/compile-libs/
-$ cp bin/cookandroid-api.jar $PROJECT/libs/
+$ cp bin/DroidCook.jar $PROJECT/compile-libs/
+$ cp bin/DroidCook-api.jar $PROJECT/libs/
 $ cp cook_rules.xml $PROJECT
 ```
 
@@ -67,7 +67,7 @@ Finally, update the project's `custom_rules.xml` to include `cook_rules.xml`:
 
 For now, have a look at:
 
-https://github.com/thesmythgroup/CookAndroid/blob/master/src/org/tsg/android/api/Annotations.java
+https://github.com/thesmythgroup/DroidCook/blob/master/src/org/tsg/android/api/Annotations.java
 
 ## Differences from ...
 

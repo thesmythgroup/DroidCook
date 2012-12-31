@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="cookandroid" default="help">
+<project name="droidcook" default="help">
 
     <path id="jars">
         <fileset dir="libs" includes="**/*.jar"/>
@@ -11,7 +11,7 @@
     </target>
 
     <target name="asm" depends="-compile">
-        <jar destfile="bin/cookandroid.jar"
+        <jar destfile="bin/droidcook.jar"
             basedir="bin/classes"
             filesetmanifest="skip"
             includes="org/tsg/android/asm/*">
@@ -25,7 +25,7 @@
     </target>
 
     <target name="api" depends="-compile">
-        <jar destfile="bin/cookandroid-api.jar"
+        <jar destfile="bin/droidcook-api.jar"
             basedir="bin/classes"
             filesetmanifest="skip"
             includes="org/tsg/android/api/*">
@@ -37,8 +37,8 @@
     <target name="install" depends="build">
         <echo>Copying assets to ${project}</echo>
         <mkdir dir="${project}/compile-libs"/>
-        <copy file="bin/cookandroid.jar" todir="${project}/compile-libs" overwrite="true" />
-        <copy file="bin/cookandroid-api.jar" todir="${project}/libs" overwrite="true" />
+        <copy file="bin/droidcook.jar" todir="${project}/compile-libs" overwrite="true" />
+        <copy file="bin/droidcook-api.jar" todir="${project}/libs" overwrite="true" />
         <copy file="cook_rules.xml" todir="${project}/" overwrite="true" />
     </target>
 

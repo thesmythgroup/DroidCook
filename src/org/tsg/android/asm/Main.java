@@ -17,18 +17,23 @@ import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.util.ASMifier;
+import org.objectweb.asm.util.Printer;
+import org.objectweb.asm.util.Textifier;
 import org.objectweb.asm.util.TraceClassVisitor;
 
 public class Main extends ClassVisitor implements Opcodes {
 
 	private enum ClsVisitor {
-		ANDROID_APP_ACTIVITY;
+		ANDROID_APP_ACTIVITY,
+		ANDROID_SUPPORT_V4_APP_FRAGMENTACTIVITY,
+		ANDROID_SUPPORT_V4_APP_FRAGMENT;
 
 		public static ClassVisitor getVisitorFor(String name, ClassVisitor visitor, Details details, File file) {
 			try {
 				ClsVisitor cls = ClsVisitor.valueOf(name.replace("/", "_").toUpperCase());
 				switch (cls) {
 				case ANDROID_APP_ACTIVITY:
+				case ANDROID_SUPPORT_V4_APP_FRAGMENTACTIVITY:
 					return new ClassActivity(visitor, details, file);
 				default:
 					System.out.println("TODO Implement ClassVisitor for " + name);
@@ -122,13 +127,20 @@ public class Main extends ClassVisitor implements Opcodes {
 	public static void main(String[] args) throws IOException {
 
 		boolean debug = false;
+		Printer printer = null;
 
 		if (args.length == 0) {
 			throw new RuntimeException("usage: Main [path]");
 		}
 
-		if (args.length == 2 && "-debug".equals(args[1])) {
-			debug = true;
+		if (args.length == 2) {
+			if ("-debug".equals(args[1])) {
+				debug = true;
+				printer = new Textifier();
+			} else if ("-asmifier".equals(args[1])) {
+				debug = true;
+				printer = new ASMifier();
+			}
 		}
 
 		final List<File> clsFiles = new ArrayList<File>();
@@ -158,7 +170,7 @@ public class Main extends ClassVisitor implements Opcodes {
 			ClassVisitor cv = cw;
 
 			if (debug) {
-				cv = new TraceClassVisitor(cv, new PrintWriter(System.out, true));
+				cv = new TraceClassVisitor(cv, printer, new PrintWriter(System.out, true));
 			}
 
 			cv = new Main(cv, details, file);
