@@ -54,13 +54,13 @@ public final class DetailsVisitor extends ClassVisitor implements Opcodes {
 	}
 
 	public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
-		mDetails.setFieldArgs(name, desc);
+		mDetails.setFieldArgs(name, desc, signature);
 		checkAnnotation(name);
 		return new BaseFieldVisitor(mDetails.getAnnotations());
 	}
 
 	public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-		mDetails.setMethodArgs(name, desc);
+		mDetails.setMethodArgs(name, desc, signature);
 		checkAnnotation(name);
 		return new BaseMethodVisitor(mDetails.getAnnotations());
 	}

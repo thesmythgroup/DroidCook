@@ -2,11 +2,23 @@
 <project name="droidcook" default="help">
     <target name="-post-compile">
         <echo>Transforming class files.</echo>
-        <java jar="compile-libs/droidcook.jar" fork="true" failonerror="true">
-            <arg value="bin/classes"/>
+
+        <path id="droidcook_classpath">
+            <pathelement location="${out.classes.absolute.dir}" />
+            <path refid="project.target.class.path" />
+            <path refid="project.all.jars.path" />
+            <pathelement location="compile-libs/droidcook.jar" />
+        </path>
+        <java
+            classname="org.tsg.android.asm.Main"
+            classpathref="droidcook_classpath"
+            fork="true"
+            failonerror="true" >
+
+            <arg value="${out.classes.absolute.dir}" />
             <!-- Additional args available
-            <arg value="-debug"/>
-            <arg value="-asmifier"/>
+            <arg value="-debug" />
+            <arg value="-asmifier" />
           	-->
         </java>
     </target>

@@ -23,23 +23,50 @@ import org.objectweb.asm.util.TraceClassVisitor;
 
 public class Main extends ClassVisitor implements Opcodes {
 
-	private enum ClsVisitor {
-		ANDROID_APP_ACTIVITY,
-		ANDROID_SUPPORT_V4_APP_FRAGMENTACTIVITY,
-		ANDROID_SUPPORT_V4_APP_FRAGMENT;
+	private enum AndroidClass {
+		ACTIVITY("android.app.Activity"),
+		FRAGMENT_ACTIVITY("android.support.v4.app.FragmentActivity"),
+		FRAGMENT("android.support.v4.app.Fragment");
 
+		private String mName;
+
+		private AndroidClass(String name) {
+			mName = name;
+		}
+
+		@SuppressWarnings("unchecked")
 		public static ClassVisitor getVisitorFor(String name, ClassVisitor visitor, Details details, File file) {
-			try {
-				ClsVisitor cls = ClsVisitor.valueOf(name.replace("/", "_").toUpperCase());
-				switch (cls) {
-				case ANDROID_APP_ACTIVITY:
-				case ANDROID_SUPPORT_V4_APP_FRAGMENTACTIVITY:
-					return new ClassActivity(visitor, details, file);
-				default:
-					System.out.println("TODO Implement ClassVisitor for " + name);
-					return null;
+
+			AndroidClass selected = null;
+
+			for (AndroidClass androidClass : AndroidClass.values()) {
+				try {
+					ClassLoader loader = ClassLoader.getSystemClassLoader();
+					Class a = loader.loadClass(name.replace("/", "."));
+					Class b = loader.loadClass(androidClass.mName);
+					if (b.isAssignableFrom(a)) {
+						selected = androidClass;
+						break;
+					}
+				} catch (IllegalArgumentException e) {
+					System.out.println(e.getMessage());
+					continue;
+				} catch (ClassNotFoundException e) {
+					System.out.println(e.getMessage());
+					continue;
 				}
-			} catch (IllegalArgumentException e) {
+			}
+
+			if (selected == null) {
+				return null;
+			}
+
+			switch (selected) {
+			case ACTIVITY:
+			case FRAGMENT_ACTIVITY:
+				return new ClassActivity(visitor, details, file);
+			default:
+				System.out.println("TODO Implement ClassVisitor for " + name);
 				return null;
 			}
 		}
@@ -60,7 +87,7 @@ public class Main extends ClassVisitor implements Opcodes {
 	 * Match superName against known class handlers
 	 */
 	public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-		ClassVisitor visitor = ClsVisitor.getVisitorFor(superName, mVisitor, mDetails, mFile);
+		ClassVisitor visitor = AndroidClass.getVisitorFor(superName, mVisitor, mDetails, mFile);
 		if (visitor != null) {
 			System.out.println(name);
 			mVisitor = visitor;
