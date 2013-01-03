@@ -1,6 +1,5 @@
 package org.tsg.android.asm;
 
-import org.objectweb.asm.Label;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -8,10 +7,11 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-public class ClassActivity extends ClassVisitor implements Opcodes {
+public class ClassFragment extends ClassVisitor implements Opcodes {
 
 	private enum Override {
-		ONCREATE;
+		ONCREATEVIEW,
+		ONACTIVITYCREATED;
 
 		public static Override from(String name) {
 			try {
@@ -27,7 +27,7 @@ public class ClassActivity extends ClassVisitor implements Opcodes {
 	private Details mDetails;
 	private File mFile;
 
-	public ClassActivity(ClassVisitor cv, Details details, File file) {
+	public ClassFragment(ClassVisitor cv, Details details, File file) {
 		super(ASM4, cv);
 		mVisitor = cv;
 		mDetails = details;
@@ -67,51 +67,56 @@ public class ClassActivity extends ClassVisitor implements Opcodes {
 	}
 
 	public void visitEnd() {
-		onCreate();
+		onCreateView();
+		onActivityCreated();
 		mVisitor.visitEnd();
 	}
 
-	public void onCreate() {
+
+	public void onCreateView() {
 
 		Annotations ann = mDetails.getAnnotations();
 		String className = mDetails.getClassName();
 		String superName = mDetails.getSuperName();
-		boolean overridden = mOverridden.contains(Override.ONCREATE);
+		boolean overridden = mOverridden.contains(Override.ONCREATEVIEW);
 
 		Maxs maxs = new Maxs();
-		maxs.setLocals(2);
+		maxs.setStack(1);
+		maxs.setLocals(4);
 
-		MethodVisitor mv = mVisitor.visitMethod(ACC_PUBLIC, "onCreate", "(Landroid/os/Bundle;)V", null, null);
+		MethodVisitor mv = mVisitor.visitMethod(ACC_PUBLIC, "onCreateView", "(Landroid/view/LayoutInflater;Landroid/view/ViewGroup;Landroid/os/Bundle;)Landroid/view/View;", null, null);
 		mv.visitCode();
 
-		Methods.onCreateSuper(mv, maxs, mDetails);
+		// View for use in return, and possibly set below
+		mv.visitInsn(ACONST_NULL);
+		mv.visitVarInsn(ASTORE, 4);
 
-		if (ann.contains(className, Annotations.CONTENT_VIEW)) {
+		if (overridden) {
+			Methods.onCreateViewOriginal(mv, maxs, mDetails);
+		} else if (ann.contains(className, Annotations.CONTENT_VIEW)) {
 			Integer id = (Integer) ann.get(className, Annotations.CONTENT_VIEW, "value");
-			Methods.setContentView(mv, maxs, mDetails, id);
+			Methods.onCreateViewInflate(mv, maxs, mDetails, id);
 		}
 
 		if (ann.exists(Annotations.VIEW_BY_ID)) {
 			for (String field : ann.namesFor(Annotations.VIEW_BY_ID)) {
 				Integer id = (Integer) ann.get(field, Annotations.VIEW_BY_ID, "value");
-				Methods.findViewById(mv, maxs, mDetails, field, id);
+				Methods.onCreateViewInjectView(mv, maxs, mDetails, field, id);
 			}
 		}
 
+		/* TODO getArguments()
 		if (ann.exists(Annotations.EXTRA)) {
 			for (String field : ann.namesFor(Annotations.EXTRA)) {
 				String extraName = (String) ann.get(field, Annotations.EXTRA, "value");
 				Methods.injectExtra(mv, maxs, mDetails, extraName, field);
 			}
 		}
+		*/
 
-		if (overridden) {
-			Methods.onCreateVirtual(mv, maxs, mDetails, "_onCreate");
-		}
-
-		if (ann.exists(Annotations.ON_CREATE)) {
-			for (String method : ann.namesFor(Annotations.ON_CREATE)) {
-				Methods.onCreateVirtual(mv, maxs, mDetails, method);
+		if (ann.exists(Annotations.ON_CREATE_VIEW)) {
+			for (String method : ann.namesFor(Annotations.ON_CREATE_VIEW)) {
+				Methods.onCreateViewVirtual(mv, maxs, mDetails, method);
 			}
 		}
 
@@ -120,7 +125,7 @@ public class ClassActivity extends ClassVisitor implements Opcodes {
 			for (String method : ann.namesFor(Annotations.ON_CLICK)) {
 				int[] ids = (int[]) ann.get(method, Annotations.ON_CLICK, "value");
 				for (int id : ids) {
-					Methods.setOnClickListener(mv, maxs, mDetails, anonName, id);
+					setOnClickListener(mv, maxs, mDetails, anonName, id);
 					Utils.newAnonymousInnerOnClick(mDetails.getClassName(), anonName, method, mFile);
 					anonName = Utils.nextInnerClassName(anonName);
 				}
@@ -128,46 +133,50 @@ public class ClassActivity extends ClassVisitor implements Opcodes {
 		}
 
 		//
-		Methods.onCreateReturn(mv, maxs);
+		Methods.onCreateViewReturn(mv, maxs, mDetails);
 		mv.visitEnd();
 	}
 
-	/**
-	 * 
-	 */
-	public void onClick2(MethodVisitor mv, Maxs maxs, int[] ids) {
+	public void onActivityCreated() {
+		Annotations ann = mDetails.getAnnotations();
 		String className = mDetails.getClassName();
-		String anonName = className + "$1";
+		String superName = mDetails.getSuperName();
+		boolean overridden = mOverridden.contains(Override.ONACTIVITYCREATED);
 
-		Label l0 = new Label();
-		mv.visitLabel(l0);
+		Maxs maxs = new Maxs();
+		maxs.setLocals(2);
+
+		MethodVisitor mv = mVisitor.visitMethod(ACC_PUBLIC, "onActivityCreated", "(Landroid/os/Bundle;)V", null, null);
+		mv.visitCode();
+
+		Methods.onActivityCreatedSuper(mv, maxs, mDetails);
+
+		if (overridden) {
+			Methods.onCreateVirtual(mv, maxs, mDetails, "_onActivityCreated");
+		}
+
+		if (ann.exists(Annotations.ON_CREATE)) {
+			for (String method : ann.namesFor(Annotations.ON_CREATE)) {
+				Methods.onCreateVirtual(mv, maxs, mDetails, method);
+			}
+		}
+
+		//
+		mv.visitInsn(RETURN);
+		mv.visitMaxs(maxs.getStack(), maxs.getLocals());
+		mv.visitEnd();
+	}
+
+	public static void setOnClickListener(MethodVisitor mv, Maxs maxs, Details details, String anonName, Integer id) {
+		String className = details.getClassName();
+		mv.visitVarInsn(ALOAD, 4);
+		mv.visitLdcInsn(id);
+		mv.visitMethodInsn(INVOKEVIRTUAL, "android/view/View", "findViewById", "(I)Landroid/view/View;");
 		mv.visitTypeInsn(NEW, anonName);
 		mv.visitInsn(DUP);
 		mv.visitVarInsn(ALOAD, 0);
 		mv.visitMethodInsn(INVOKESPECIAL, anonName, "<init>", "(L" + className + ";)V");
-		mv.visitVarInsn(ASTORE, 1);
-		Label l1 = new Label();
-		mv.visitLabel(l1);
-		for (int id : ids) {
-			mv.visitVarInsn(ALOAD, 0);
-			mv.visitLdcInsn(new Integer(id));
-			mv.visitMethodInsn(INVOKEVIRTUAL, className, "findViewById", "(I)Landroid/view/View;");
-			mv.visitVarInsn(ALOAD, 1);
-			mv.visitMethodInsn(INVOKEVIRTUAL, "android/view/View", "setOnClickListener", "(Landroid/view/View$OnClickListener;)V");
-		}
-
-		maxs.setStack(3);
-
-		//TODO move to onClickReturn() but account for Labels below
-		Label l2 = new Label();
-		mv.visitLabel(l2);
-		mv.visitInsn(RETURN);
-		Label l3 = new Label();
-		mv.visitLabel(l3);
-		// TODO one for each call to method, defer somehow
-		mv.visitLocalVariable("l", "Landroid/view/View$OnClickListener;", null, l1, l2, 1);
-		//
-		mv.visitLocalVariable("this", "L" + className + ";", null, l0, l3, 0);
+		mv.visitMethodInsn(INVOKEVIRTUAL, "android/view/View", "setOnClickListener", "(Landroid/view/View$OnClickListener;)V");
+		maxs.setStack(4);
 	}
-
 }

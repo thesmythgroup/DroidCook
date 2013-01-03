@@ -12,7 +12,10 @@ public class Annotations {
 	public static final String CONTENT_VIEW = "Lorg/tsg/android/api/Annotations$ContentView;";
 	public static final String VIEW_BY_ID = "Lorg/tsg/android/api/Annotations$ViewById;";
 	public static final String ON_CREATE = "Lorg/tsg/android/api/Annotations$OnCreate;";
+	public static final String ON_CREATE_VIEW = "Lorg/tsg/android/api/Annotations$OnCreateView;";
+	public static final String ON_ACTIVITY_CREATED = "Lorg/tsg/android/api/Annotations$OnActivityCreated;";
 	public static final String ON_CLICK = "Lorg/tsg/android/api/Annotations$OnClick;";
+	public static final String EXTRA = "Lorg/tsg/android/api/Annotations$Extra;";
 
 	private Set<String> mNames;
 	private Map<String, Map<String, BaseAnnotationVisitor>> mMap;

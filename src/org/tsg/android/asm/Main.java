@@ -26,6 +26,9 @@ public class Main extends ClassVisitor implements Opcodes {
 	private enum AndroidClass {
 		ACTIVITY("android.app.Activity"),
 		FRAGMENT_ACTIVITY("android.support.v4.app.FragmentActivity"),
+		LIST_ACTIVITY("android.app.ListActivity"),
+		EXPANDABLE_LIST_ACTIVITY("android.app.ExpandableListActivity"),
+
 		FRAGMENT("android.support.v4.app.Fragment");
 
 		private String mName;
@@ -64,7 +67,11 @@ public class Main extends ClassVisitor implements Opcodes {
 			switch (selected) {
 			case ACTIVITY:
 			case FRAGMENT_ACTIVITY:
+			case LIST_ACTIVITY:
+			case EXPANDABLE_LIST_ACTIVITY:
 				return new ClassActivity(visitor, details, file);
+			case FRAGMENT:
+				return new ClassFragment(visitor, details, file);
 			default:
 				System.out.println("TODO Implement ClassVisitor for " + name);
 				return null;
@@ -143,7 +150,7 @@ public class Main extends ClassVisitor implements Opcodes {
 				listFiles(file, v);
 			} else if (file.isFile() && file.getPath().endsWith(".class")) {
 				String p = file.getPath();
-				if (p.contains("org/tsg/android") || p.contains("R$") || p.contains("R.class") || p.contains("BuildConfig.class")) {
+				if (p.contains("org/tsg/android") || p.contains("R.class") || p.contains("R$") || p.contains("BuildConfig.class")) {
 					continue;
 				}
 				v.visitFile(file);
@@ -156,22 +163,31 @@ public class Main extends ClassVisitor implements Opcodes {
 		boolean debug = false;
 		Printer printer = null;
 
-		if (args.length == 0) {
-			throw new RuntimeException("usage: Main [path]");
+		if (args.length < 2) {
+			throw new RuntimeException("usage: Main [path] [R.java]");
 		}
 
-		if (args.length == 2) {
-			if ("-debug".equals(args[1])) {
+		File root = new File(args[0]);
+
+		Class rClass;
+		try {
+			rClass = ClassLoader.getSystemClassLoader().loadClass(args[1] + ".R");
+		} catch (ClassNotFoundException e) {
+			throw new RuntimeException(e);
+		}
+
+		if (args.length == 3) {
+			if ("-debug".equals(args[2])) {
 				debug = true;
 				printer = new Textifier();
-			} else if ("-asmifier".equals(args[1])) {
+			} else if ("-asmifier".equals(args[2])) {
 				debug = true;
 				printer = new ASMifier();
 			}
 		}
 
 		final List<File> clsFiles = new ArrayList<File>();
-		listFiles(new File(args[0]), new FileVisitor() {
+		listFiles(root, new FileVisitor() {
 			public void visitFile(File f) {
 				clsFiles.add(f);
 			}
@@ -184,12 +200,12 @@ public class Main extends ClassVisitor implements Opcodes {
 
 			Details details = DetailsVisitor.getDetails(cls);
 
-			// System.out.println(details);
-
 			if (details.noTransform()) {
 				System.out.println("skipping " + details.getClassName());
 				continue;
 			}
+
+			details.setR(rClass);
 
 			ClassReader cr = new ClassReader(cls);
 			ClassWriter cw = new ClassWriter(cr, 0);
