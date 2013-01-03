@@ -119,6 +119,13 @@ public class ClassActivity extends ClassVisitor implements Opcodes {
 			String anonName = Utils.nextInnerClassName(mFile, mDetails.getClassName());
 			for (String method : ann.namesFor(Annotations.ON_CLICK)) {
 				int[] ids = (int[]) ann.get(method, Annotations.ON_CLICK, "value");
+				if (ids == null) {
+					int id = mDetails.getResourceId(Methods.normalizeName(method));
+					Methods.setOnClickListener(mv, maxs, mDetails, anonName, id);
+					Utils.newAnonymousInnerOnClick(mDetails.getClassName(), anonName, method, mFile);
+					anonName = Utils.nextInnerClassName(anonName);
+					continue;
+				}
 				for (int id : ids) {
 					Methods.setOnClickListener(mv, maxs, mDetails, anonName, id);
 					Utils.newAnonymousInnerOnClick(mDetails.getClassName(), anonName, method, mFile);
@@ -133,7 +140,7 @@ public class ClassActivity extends ClassVisitor implements Opcodes {
 	}
 
 	/**
-	 * 
+	 * Only generate a single anonymouse innter class and reference it when setting listeners.
 	 */
 	public void onClick2(MethodVisitor mv, Maxs maxs, int[] ids) {
 		String className = mDetails.getClassName();

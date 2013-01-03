@@ -79,15 +79,6 @@ public final class Annotations {
 	/**
 	 * 
 	 */
-	@Target(ElementType.FIELD)
-	@Retention(RetentionPolicy.CLASS)
-	public @interface Arg {
-		String value() default "@null";
-	}
-
-	/**
-	 * 
-	 */
 	@Target(ElementType.METHOD)
 	@Retention(RetentionPolicy.CLASS)
 	public @interface OnCreate { }
@@ -112,7 +103,7 @@ public final class Annotations {
 	@Target(ElementType.METHOD)
 	@Retention(RetentionPolicy.CLASS)
 	public @interface OnClick {
-		int[] value();
+		int[] value() default 0;
 	}
 
 	/**

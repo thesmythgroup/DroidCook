@@ -233,4 +233,37 @@ public final class Methods implements Opcodes {
 		mv.visitMethodInsn(INVOKEVIRTUAL, className, methodName, desc);
 		maxs.setStack(1);
 	}
+
+	public static void getArgument(MethodVisitor mv, Maxs maxs, Details details, String argName, String fieldName) {
+		String className = details.getClassName();
+		String fieldDesc = details.getFieldDesc(fieldName);
+		String fieldType = details.getFieldType(fieldName);
+
+		if (argName == null || "@null".equals(argName)) {
+			argName = normalizeName(fieldName);
+		}
+
+		mv.visitVarInsn(ALOAD, 0);
+		mv.visitVarInsn(ALOAD, 0);
+		mv.visitMethodInsn(INVOKEVIRTUAL, className, "getArguments", "()Landroid/os/Bundle;");
+		mv.visitLdcInsn(argName);
+		mv.visitMethodInsn(INVOKEVIRTUAL, "android/os/Bundle", "get", "(Ljava/lang/String;)Ljava/lang/Object;");
+		mv.visitTypeInsn(CHECKCAST, fieldType);
+		mv.visitFieldInsn(PUTFIELD, className, fieldName, fieldDesc);
+
+		maxs.setStack(3);
+		maxs.setLocals(1);
+	}
+
+	/*
+	
+		mv.visitVarInsn(ALOAD, 0);
+		mv.visitVarInsn(ALOAD, 0);
+		mv.visitMethodInsn(INVOKEVIRTUAL, "com/dasa/anntest/MainFragment", "getArguments", "()Landroid/os/Bundle;");
+		mv.visitLdcInsn("boo");
+		mv.visitMethodInsn(INVOKEVIRTUAL, "android/os/Bundle", "get", "(Ljava/lang/String;)Ljava/lang/Object;");
+		mv.visitTypeInsn(CHECKCAST, "java/lang/String");
+		mv.visitFieldInsn(PUTFIELD, "com/dasa/anntest/MainFragment", "mName", "Ljava/lang/String;");
+
+	 */
 }

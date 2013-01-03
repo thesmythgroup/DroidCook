@@ -43,6 +43,12 @@ public class ClassFragment extends ClassVisitor implements Opcodes {
 			String anonName = Utils.nextInnerClassName(mFile, mDetails.getClassName());
 			for (String method : ann.namesFor(Annotations.ON_CLICK)) {
 				int[] ids = (int[]) ann.get(method, Annotations.ON_CLICK, "value");
+				if (ids == null) {
+					mVisitor.visitInnerClass(anonName, null, null, 0);
+					anonName = Utils.nextInnerClassName(anonName);
+					continue;
+				}
+
 				for (int id : ids) {
 					mVisitor.visitInnerClass(anonName, null, null, 0);
 					anonName = Utils.nextInnerClassName(anonName);
@@ -105,14 +111,12 @@ public class ClassFragment extends ClassVisitor implements Opcodes {
 			}
 		}
 
-		/* TODO getArguments()
 		if (ann.exists(Annotations.EXTRA)) {
 			for (String field : ann.namesFor(Annotations.EXTRA)) {
 				String extraName = (String) ann.get(field, Annotations.EXTRA, "value");
-				Methods.injectExtra(mv, maxs, mDetails, extraName, field);
+				Methods.getArgument(mv, maxs, mDetails, extraName, field);
 			}
 		}
-		*/
 
 		if (ann.exists(Annotations.ON_CREATE_VIEW)) {
 			for (String method : ann.namesFor(Annotations.ON_CREATE_VIEW)) {
@@ -124,6 +128,14 @@ public class ClassFragment extends ClassVisitor implements Opcodes {
 			String anonName = Utils.nextInnerClassName(mFile, mDetails.getClassName());
 			for (String method : ann.namesFor(Annotations.ON_CLICK)) {
 				int[] ids = (int[]) ann.get(method, Annotations.ON_CLICK, "value");
+				if (ids == null) {
+					int id = mDetails.getResourceId(Methods.normalizeName(method));
+					setOnClickListener(mv, maxs, mDetails, anonName, id);
+					Utils.newAnonymousInnerOnClick(mDetails.getClassName(), anonName, method, mFile);
+					anonName = Utils.nextInnerClassName(anonName);
+					continue;
+				}
+
 				for (int id : ids) {
 					setOnClickListener(mv, maxs, mDetails, anonName, id);
 					Utils.newAnonymousInnerOnClick(mDetails.getClassName(), anonName, method, mFile);
@@ -152,12 +164,12 @@ public class ClassFragment extends ClassVisitor implements Opcodes {
 		Methods.onActivityCreatedSuper(mv, maxs, mDetails);
 
 		if (overridden) {
-			Methods.onCreateVirtual(mv, maxs, mDetails, "_onActivityCreated");
+			Methods.onActivityCreatedVirtual(mv, maxs, mDetails, "_onActivityCreated");
 		}
 
-		if (ann.exists(Annotations.ON_CREATE)) {
-			for (String method : ann.namesFor(Annotations.ON_CREATE)) {
-				Methods.onCreateVirtual(mv, maxs, mDetails, method);
+		if (ann.exists(Annotations.ON_ACTIVITY_CREATED)) {
+			for (String method : ann.namesFor(Annotations.ON_ACTIVITY_CREATED)) {
+				Methods.onActivityCreatedVirtual(mv, maxs, mDetails, method);
 			}
 		}
 
