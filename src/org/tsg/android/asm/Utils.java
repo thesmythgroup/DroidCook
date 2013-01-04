@@ -12,6 +12,35 @@ public final class Utils implements Opcodes {
 
 	private Utils() { }
 
+	/**
+	 * Checks if androidClassName is assignable from className.
+	 */
+	public static boolean isAssignableFrom(String className, String androidClassName) {
+		ClassLoader loader = ClassLoader.getSystemClassLoader();
+		try {
+			Class a = loader.loadClass(className.replace("/", "."));
+			Class b = loader.loadClass(androidClassName);
+			if (b.isAssignableFrom(a)) {
+				return true;
+			}
+		} catch (ClassNotFoundException e) {
+			//
+		}
+		return false;
+	}
+
+	/**
+	 * Normalizes a given CamelCase name to an android_identifier. Examples:
+	 *
+	 * mTextView -> text_view
+	 * sDarkBlue -> dark_blue
+	 * imageView -> image_view
+	 */
+	public static String normalizeName(String name) {
+		// TODO handle sDarkBlue
+		return name.replaceFirst("^m([A-Z][A-Za-z0-9]*$)", "$1").replaceAll("(.)([A-Z])", "$1_$2").toLowerCase();
+	}
+
 	public static String getFileName(String className) {
 		int i = className.lastIndexOf("/");
 		return className.substring(i+1, className.length()) + ".class";

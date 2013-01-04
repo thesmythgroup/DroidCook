@@ -14,7 +14,7 @@
         <jar destfile="bin/droidcook.jar"
             basedir="bin/classes"
             filesetmanifest="skip"
-            includes="org/tsg/android/asm/*">
+            includes="org/tsg/android/asm/* org/tsg/android/asm/activity/* org/tsg/android/asm/fragment/*">
 
             <zipgroupfileset dir="libs" includes="*.jar"/>
 

@@ -22,6 +22,13 @@ public final class Annotations {
 	public @interface NoTransform { }
 
 	/**
+	 * Calls requestFeature
+	 */
+	@Target(ElementType.TYPE)
+	@Retention(RetentionPolicy.CLASS)
+	public @interface NoTitle { }
+
+	/**
 	 * Call setContentView within generated onCreate method of an Activity
 	 * derived class. Uses given resource id, otherwise use class name to
 	 * determine id. Examples:

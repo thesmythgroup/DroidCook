@@ -20,16 +20,20 @@ import org.objectweb.asm.util.ASMifier;
 import org.objectweb.asm.util.Printer;
 import org.objectweb.asm.util.Textifier;
 import org.objectweb.asm.util.TraceClassVisitor;
+import org.tsg.android.asm.activity.ActivityVisitor;
+import org.tsg.android.asm.fragment.FragmentVisitor;
 
 public class Main extends ClassVisitor implements Opcodes {
 
 	private enum AndroidClass {
 		ACTIVITY("android.app.Activity"),
 		FRAGMENT_ACTIVITY("android.support.v4.app.FragmentActivity"),
-		LIST_ACTIVITY("android.app.ListActivity"),
-		EXPANDABLE_LIST_ACTIVITY("android.app.ExpandableListActivity"),
 
-		FRAGMENT("android.support.v4.app.Fragment");
+		FRAGMENT("android.app.Fragment"),
+		SUPPORT_FRAGMENT("android.support.v4.app.Fragment"),
+
+		VIEW_GROUP("android.view.ViewGroup"),
+		VIEW("android.view.View");
 
 		private String mName;
 
@@ -52,10 +56,12 @@ public class Main extends ClassVisitor implements Opcodes {
 						break;
 					}
 				} catch (IllegalArgumentException e) {
-					System.out.println(e.getMessage());
+					// TODO print based on -debug
+					// System.out.println(e.getMessage());
 					continue;
 				} catch (ClassNotFoundException e) {
-					System.out.println(e.getMessage());
+					// TODO print based on -debug
+					// System.out.println(e.getMessage());
 					continue;
 				}
 			}
@@ -67,11 +73,10 @@ public class Main extends ClassVisitor implements Opcodes {
 			switch (selected) {
 			case ACTIVITY:
 			case FRAGMENT_ACTIVITY:
-			case LIST_ACTIVITY:
-			case EXPANDABLE_LIST_ACTIVITY:
-				return new ClassActivity(visitor, details, file);
+				return new ActivityVisitor(visitor, details, file);
 			case FRAGMENT:
-				return new ClassFragment(visitor, details, file);
+			case SUPPORT_FRAGMENT:
+				return new FragmentVisitor(visitor, details, file);
 			default:
 				System.out.println("TODO Implement ClassVisitor for " + name);
 				return null;
@@ -96,7 +101,7 @@ public class Main extends ClassVisitor implements Opcodes {
 	public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
 		ClassVisitor visitor = AndroidClass.getVisitorFor(superName, mVisitor, mDetails, mFile);
 		if (visitor != null) {
-			System.out.println(name);
+			System.out.println("transforming " + name);
 			mVisitor = visitor;
 		}
 		mVisitor.visit(version, access, name, signature, superName, interfaces);

@@ -1,6 +1,7 @@
 package org.tsg.android.asm;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -9,6 +10,7 @@ import java.util.Set;
 
 public class Annotations {
 
+	public static final String NO_TITLE = "Lorg/tsg/android/api/Annotations$NoTitle;";
 	public static final String CONTENT_VIEW = "Lorg/tsg/android/api/Annotations$ContentView;";
 	public static final String VIEW_BY_ID = "Lorg/tsg/android/api/Annotations$ViewById;";
 	public static final String ON_CREATE = "Lorg/tsg/android/api/Annotations$OnCreate;";
@@ -74,6 +76,10 @@ public class Annotations {
 	}
 
 	public List<String> namesFor(String annotation) {
+		if (!exists(annotation)) {
+			return Collections.emptyList();
+		}
+
 		List<String> names = new ArrayList<String>();
 		for (String name : mMap.keySet()) {
 			if (contains(name, annotation)) {
