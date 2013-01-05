@@ -37,7 +37,7 @@ public final class DetailsVisitor extends ClassVisitor implements Opcodes {
 	public void visitSource(String source, String debug) { }
 
 	public void visitOuterClass(String owner, String name, String desc) {
-		checkAnnotation(name);
+		// checkAnnotation(name);
 	}
 
 	public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
@@ -71,6 +71,9 @@ public final class DetailsVisitor extends ClassVisitor implements Opcodes {
 
 	public void checkAnnotation(String name) {
 		if (mWatching == null) {
+			if (name == null) {
+				return;
+			}
 			mWatching = name;
 		}
 

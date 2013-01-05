@@ -105,28 +105,28 @@ public class Main extends ClassVisitor implements Opcodes {
 			mVisitor = visitor;
 		}
 		mVisitor.visit(version, access, name, signature, superName, interfaces);
-		// prevent future transforms of this class file
-		mVisitor.visitAnnotation("Lorg/tsg/android/api/Annotations$NoTransform;", true);
 	}
 
 	public void visitSource(String source, String debug) {
 		mVisitor.visitSource(source, debug);
-	}
-
-	public void visitOuterClass(String owner, String name, String desc) {
-		mVisitor.visitOuterClass(owner, name, desc);
+		// prevent future transforms of this class file
+		mVisitor.visitAnnotation("Lorg/tsg/android/api/Annotations$NoTransform;", true);
 	}
 
 	public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
 		return mVisitor.visitAnnotation(desc, visible);
 	}
 
-	public void visitAttribute(Attribute attr) {
-		mVisitor.visitAttribute(attr);
-	}
-
 	public void visitInnerClass(String name, String outerName, String innerName, int access) {
 		mVisitor.visitInnerClass(name, outerName, innerName, access);
+	}
+
+	public void visitOuterClass(String owner, String name, String desc) {
+		mVisitor.visitOuterClass(owner, name, desc);
+	}
+
+	public void visitAttribute(Attribute attr) {
+		mVisitor.visitAttribute(attr);
 	}
 
 	public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {

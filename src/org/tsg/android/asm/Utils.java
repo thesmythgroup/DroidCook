@@ -81,7 +81,7 @@ public final class Utils implements Opcodes {
 		MethodVisitor mv;
 
 		cw.visit(V1_6, ACC_SUPER, anonName, null, "java/lang/Object", new String[] {"android/view/View$OnClickListener"});
-		// cw.visitAnnotation("Lorg/tsg/android/api/Annotations$NoTransform;", true);
+		cw.visitAnnotation("Lorg/tsg/android/api/Annotations$NoTransform;", true);
 
 		// cw.visitSource("MainActivity.java", null);
 

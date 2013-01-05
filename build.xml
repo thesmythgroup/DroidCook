@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="droidcook" default="help">
+<project name="droidcook" default="build">
 
     <path id="jars">
         <fileset dir="libs" includes="**/*.jar"/>
     </path>
 
-    <target name="-compile">
+    <target name="-compile" depends="clean">
         <mkdir dir="bin/classes"/>
         <javac srcdir="src" destdir="bin/classes" classpathref="jars" includeantruntime="false" debug="on"/>
     </target>

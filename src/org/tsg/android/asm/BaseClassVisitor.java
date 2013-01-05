@@ -18,6 +18,8 @@ public abstract class BaseClassVisitor extends ClassVisitor implements Opcodes {
 	private Details mDetails;
 	private File mFile;
 
+	private boolean mHandledOnClick;
+
 	public BaseClassVisitor(ClassVisitor cv, Details details, File file, List<String> overrides) {
 		super(ASM4, cv);
 		mVisitor = cv;
@@ -44,22 +46,33 @@ public abstract class BaseClassVisitor extends ClassVisitor implements Opcodes {
 
 	public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
 		mVisitor.visit(version, access, name, signature, superName, interfaces);
+	}
 
-		Annotations ann = mDetails.getAnnotations();
-		if (ann.exists(Annotations.ON_CLICK)) {
-			String anonName = Utils.nextInnerClassName(mFile, mDetails.getClassName());
-			for (String method : ann.namesFor(Annotations.ON_CLICK)) {
+	public void visitSource(String source, String debug) {
+		mVisitor.visitSource(source, debug);
+	}
 
-				int[] ids = (int[]) ann.get(method, Annotations.ON_CLICK, "value");
-				int len = (ids == null) ? 0 : ids.length;
+	public void visitInnerClass(String name, String outerName, String innerName, int access) {
+		if (!mHandledOnClick) {
+			mHandledOnClick = true;
+			Annotations ann = mDetails.getAnnotations();
+			if (ann.exists(Annotations.ON_CLICK)) {
+				String anonName = Utils.nextInnerClassName(mFile, mDetails.getClassName());
+				for (String method : ann.namesFor(Annotations.ON_CLICK)) {
 
-				for (int i = 0; i < len; i++) {
-					mVisitor.visitInnerClass(anonName, null, null, 0);
-					anonName = Utils.nextInnerClassName(anonName);
+					int[] ids = (int[]) ann.get(method, Annotations.ON_CLICK, "value");
+					int len = (ids == null) ? 0 : ids.length;
+
+					for (int i = 0; i < len; i++) {
+						mVisitor.visitInnerClass(anonName, null, null, 0);
+						anonName = Utils.nextInnerClassName(anonName);
+					}
 				}
+				mVisitor.visitInnerClass("android/view/View$OnClickListener", "android/view/View", "OnClickListener", ACC_PUBLIC + ACC_STATIC + ACC_ABSTRACT + ACC_INTERFACE);
 			}
-			mVisitor.visitInnerClass("android/view/View$OnClickListener", "android/view/View", "OnClickListener", ACC_PUBLIC + ACC_STATIC + ACC_ABSTRACT + ACC_INTERFACE);
 		}
+
+		mVisitor.visitInnerClass(name, outerName, innerName, access);
 	}
 
 	/**
