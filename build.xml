@@ -7,7 +7,16 @@
 
     <target name="-compile" depends="clean">
         <mkdir dir="bin/classes"/>
-        <javac srcdir="src" destdir="bin/classes" classpathref="jars" includeantruntime="false" debug="on"/>
+        <echo>bootclasspath ${java6.boot.classpath}</echo>
+        <javac
+            srcdir="src"
+            destdir="bin/classes"
+            classpathref="jars"
+            includeantruntime="false"
+            source="1.6"
+            target="1.6"
+            bootclasspath="/home/daniel/java6/jre/lib/rt.jar"
+            debug="on"/>
     </target>
 
     <target name="asm" depends="-compile">
@@ -35,11 +44,11 @@
     <target name="build" depends="asm, api"/>
 
     <target name="install" depends="build">
-        <echo>Copying assets to ${project}</echo>
-        <mkdir dir="${project}/compile-libs"/>
-        <copy file="bin/droidcook.jar" todir="${project}/compile-libs" overwrite="true" />
-        <copy file="bin/droidcook-api.jar" todir="${project}/libs" overwrite="true" />
-        <copy file="cook_rules.xml" todir="${project}/" overwrite="true" />
+        <echo>Copying assets to ${p}</echo>
+        <mkdir dir="${p}/compile-libs"/>
+        <copy file="bin/droidcook.jar" todir="${p}/compile-libs" overwrite="true" />
+        <copy file="bin/droidcook-api.jar" todir="${p}/libs" overwrite="true" />
+        <copy file="cook_rules.xml" todir="${p}/" overwrite="true" />
     </target>
 
     <target name="clean">

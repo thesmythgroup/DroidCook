@@ -14,10 +14,10 @@ Currently ANT only. Jars are not yet being provided.
 ```bash
 $ git clone git@github.com:thesmythgroup/DroidCook.git
 $ cd DroidCook
-$ ant -Dproject=/home/user/workspace/projectroot install
+$ ant -Dp=/home/user/workspace/projectroot install
 ```
 
-Update android project's `custom_rules.xml` to include `cook_rules.xml`:
+If `custom_rules.xml` does not exist in project root, create it as the standard `build.xml` will automatically import it. Contents of the file should include `cook_rules.xml`:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
