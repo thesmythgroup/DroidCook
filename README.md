@@ -17,14 +17,7 @@ $ cd DroidCook
 $ ant -Dp=/home/user/workspace/projectroot install
 ```
 
-If `custom_rules.xml` does not exist in project root, create it as the standard `build.xml` will automatically import it. Contents of the file should include `cook_rules.xml`:
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<project name="imported" default="help">
-    <import file="cook_rules.xml" />
-</project>
-```
+Import the `cook_rules.xml` now located in your project root.
 
 Test the project build:
 
@@ -43,7 +36,7 @@ $ cd DroidCook
 $ ant asm api
 ```
 
-This builds two jars, `DroidCook.jar` and `DroidCook-api.jar`. The first is the bytecode transformer that should run during post-compile. The second provides the annotations api and should be included in an android project like any other library.
+This builds two jars, `droidcook.jar` and `droidcook-api.jar`. The first is the bytecode transformer that should run during `-post-compile`. The second provides the annotations api and should be included in an android project like any other library.
 
 Copy the assets to android project:
 
@@ -63,7 +56,7 @@ Finally, update the project's `custom_rules.xml` to include `cook_rules.xml`:
 </project>
 ```
 
-## API
+## Available Annotations
 
 For now, have a look at:
 
@@ -71,16 +64,14 @@ https://github.com/thesmythgroup/DroidCook/blob/master/src/org/tsg/android/api/A
 
 ## Differences from ...
 
-Quick list of differences (and gripes) for similar projects.
+Quick list of differences for similar projects.
 
 ### Roboguice
 
-* Requires extending the library's classes to do anything useful, painful
+* Requires extending the library's classes
 * Performs work during runtime via reflection
-* Obscure errors and stack traces due to the previous two statements
 
 ### AndroidAnnotations
 
 * Generates raw source code before compiling that extends an app's current activities
-* Requires one to reference these new "invisible" generated classes throughout the app and manifest
-* Setup is tedious (but getting better at the time of this writing)
+* Requires one to reference the generated classes with an underscore suffix throughout the app and manifest
