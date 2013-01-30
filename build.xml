@@ -7,7 +7,6 @@
 
     <target name="-compile" depends="clean">
         <mkdir dir="bin/classes"/>
-        <echo>bootclasspath ${java6.boot.classpath}</echo>
         <javac
             srcdir="src"
             destdir="bin/classes"
@@ -15,7 +14,6 @@
             includeantruntime="false"
             source="1.6"
             target="1.6"
-            bootclasspath="/home/daniel/java6/jre/lib/rt.jar"
             debug="on"/>
     </target>
 
