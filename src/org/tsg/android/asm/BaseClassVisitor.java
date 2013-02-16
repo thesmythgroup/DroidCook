@@ -79,7 +79,7 @@ public abstract class BaseClassVisitor extends ClassVisitor implements Opcodes {
 	 *
 	 */
 	public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-		if (!mOverrides.contains(name)) {
+		if (mOverrides == null || !mOverrides.contains(name)) {
 			return mVisitor.visitMethod(access, name, desc, signature, exceptions);
 		}
 

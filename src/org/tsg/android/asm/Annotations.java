@@ -18,6 +18,8 @@ public class Annotations {
 	public static final String ON_ACTIVITY_CREATED = "Lorg/tsg/android/api/Annotations$OnActivityCreated;";
 	public static final String ON_CLICK = "Lorg/tsg/android/api/Annotations$OnClick;";
 	public static final String EXTRA = "Lorg/tsg/android/api/Annotations$Extra;";
+	public static final String RESOURCE = "Lorg/tsg/android/api/Annotations$Resource;";
+	public static final String PREFS = "Lorg/tsg/android/api/Annotations$Prefs;";
 
 	private Set<String> mNames;
 	private Map<String, Map<String, BaseAnnotationVisitor>> mMap;

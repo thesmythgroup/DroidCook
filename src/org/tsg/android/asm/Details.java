@@ -7,6 +7,28 @@ import java.util.Map;
 
 public class Details {
 
+	private enum Resource {
+		ID("R$id"),
+		LAYOUT("R$layout"),
+		ANIMATION("R$anim"),
+		INTEGER("R$integer"),
+		BOOLEAN("R$bool"),
+		COLOR("R$color"),
+		STRING("R$string"),
+		ARRAY("R$array"),
+		DRAWABLE("R$drawable");
+
+		private String mClassName;
+
+		private Resource(String className) {
+			mClassName = className;
+		}
+
+		public String getClassName() {
+			return mClassName;
+		}
+	}
+
 	private Annotations mAnnotations;
 	private Map<String, Description> mFields;
 	private Map<String, Description> mMethods;
@@ -86,32 +108,6 @@ public class Details {
 		mR = r;
 	}
 
-	public int getResourceId(String name) {
-		Class cls = getResourceClass("R$id");
-		try {
-			Field f = cls.getField(name);
-			return (Integer) f.get(null);
-		} catch (NoSuchFieldException e) {
-			e.printStackTrace();
-		} catch (IllegalAccessException e) {
-			e.printStackTrace();
-		}
-		throw new RuntimeException("Couldn't locate R.id." + name + " in reference to " + mClassName);
-	}
-
-	public int getResourceLayout(String name) {
-		Class cls = getResourceClass("R$layout");
-		try {
-			Field f = cls.getField(name);
-			return (Integer) f.get(null);
-		} catch (NoSuchFieldException e) {
-			e.printStackTrace();
-		} catch (IllegalAccessException e) {
-			e.printStackTrace();
-		}
-		throw new RuntimeException("Couldn't locate R.layout." + name + " in reference to " + mClassName);
-	}
-
 	private Class getResourceClass(String name) {
 		for (Class cls : mR.getDeclaredClasses()) {
 			if (cls.getName().endsWith(name)) {
@@ -119,6 +115,56 @@ public class Details {
 			}
 		}
 		throw new RuntimeException("Couldn't locate " + name);
+	}
+
+	private int getResource(String name, Resource res) {
+		String className = res.getClassName();
+		Class cls = getResourceClass(className);
+		try {
+			Field f = cls.getField(name);
+			return (Integer) f.get(null);
+		} catch (NoSuchFieldException e) {
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			e.printStackTrace();
+		}
+		throw new RuntimeException("Couldn't locate " + className.replace("\\$", "\\.") + "." + name + " in reference to " + mClassName);
+	}
+
+	public int getResourceId(String name) {
+		return getResource(name, Resource.ID);
+	}
+
+	public int getResourceLayout(String name) {
+		return getResource(name, Resource.LAYOUT);
+	}
+
+	public int getResourceAnimation(String name) {
+		return getResource(name, Resource.ANIMATION);
+	}
+
+	public int getResourceColor(String name) {
+		return getResource(name, Resource.COLOR);
+	}
+
+	public int getResourceInteger(String name) {
+		return getResource(name, Resource.INTEGER);
+	}
+
+	public int getResourceBoolean(String name) {
+		return getResource(name, Resource.BOOLEAN);
+	}
+
+	public int getResourceString(String name) {
+		return getResource(name, Resource.STRING);
+	}
+
+	public int getResourceArray(String name) {
+		return getResource(name, Resource.ARRAY);
+	}
+
+	public int getResourceDrawable(String name) {
+		return getResource(name, Resource.DRAWABLE);
 	}
 
 	public String toString() {

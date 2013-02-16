@@ -84,6 +84,37 @@ public final class Annotations {
 	}
 
 	/**
+	 * Inject a resource by the given id, otherwise use field name to determine
+	 * id. Examples:
+	 *
+	 * @Resource
+	 * public Animation mFadeIn; # getResources().getAnimation(R.anim.fade_in)
+	 *
+	 * @Resource(android.R.anim.fade_in)
+	 * public Animation mStdFadeIn;
+	 *
+	 * @Resource
+	 * public String mGreeting; # getResources().getString(R.string.greeting)
+	 *
+	 * @Resource
+	 * public int[] mNumArray; # getResources().getIntArray(R.array.num_array)
+	 */
+	@Target(ElementType.FIELD)
+	@Retention(RetentionPolicy.CLASS)
+	public @interface Resource {
+		int value() default 0;
+	}
+
+	/*
+	 *
+	 */
+	@Target(ElementType.FIELD)
+	@Retention(RetentionPolicy.CLASS)
+	public @interface Prefs {
+		String value() default "@null";
+	}
+
+	/**
 	 * 
 	 */
 	@Target(ElementType.METHOD)
@@ -125,5 +156,7 @@ public final class Annotations {
 	 */
 	@Target(ElementType.METHOD)
 	@Retention(RetentionPolicy.CLASS)
-	public @interface Background { }
+	public @interface Background {
+		String value() default "@null";
+	}
 }

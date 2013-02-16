@@ -8,6 +8,7 @@ import org.objectweb.asm.Opcodes;
 import org.tsg.android.asm.Annotations;
 import org.tsg.android.asm.Details;
 import org.tsg.android.asm.Maxs;
+import org.tsg.android.asm.Utils;
 
 public final class OnActivityCreated implements Opcodes {
 
@@ -33,6 +34,16 @@ public final class OnActivityCreated implements Opcodes {
 
 		if (overridden) {
 			invokeOverridden(mv, maxs, details);
+		}
+
+		for (String field : ann.namesFor(Annotations.RESOURCE)) {
+			Integer id = (Integer) ann.get(field, Annotations.RESOURCE, "value");
+			invokeResources(mv, maxs, details, field, id);
+		}
+
+		for (String field : ann.namesFor(Annotations.PREFS)) {
+			String prefsName = (String) ann.get(field, Annotations.PREFS, "value");
+			invokePrefs(mv, maxs, details, field, prefsName);
 		}
 
 		for (String method : ann.namesFor(Annotations.ON_ACTIVITY_CREATED)) {
@@ -91,6 +102,122 @@ public final class OnActivityCreated implements Opcodes {
 	private static void invokeReturn(MethodVisitor mv, Maxs maxs) {
 		mv.visitInsn(RETURN);
 		mv.visitMaxs(maxs.getStack(), maxs.getLocals());
+	}
+
+	private static void invokeResources(MethodVisitor mv, Maxs maxs, Details details, String fieldName, Integer id) {
+		String fieldDesc = details.getFieldDesc(fieldName);
+
+		System.out.println("fieldDesc is " + fieldDesc);
+
+		if ("I".equals(fieldDesc)) {
+			invokeResourceInteger(mv, maxs, details, fieldName, id);
+		} else if ("Z".equals(fieldDesc)) {
+			invokeResourceBoolean(mv, maxs, details, fieldName, id);
+		} else if ("Ljava/lang/String;".equals(fieldDesc)) {
+			invokeResourceString(mv, maxs, details, fieldName, id);
+		} else if ("Landroid/view/animation/Animation;".equals(fieldDesc)) {
+			invokeResourceAnimation(mv, maxs, details, fieldName, id);
+		} else if ("[I".equals(fieldDesc)) {
+			invokeResourceIntArray(mv, maxs, details, fieldName, id);
+		} else if ("[Ljava/lang/String;".equals(fieldDesc)) {
+			invokeResourceStringArray(mv, maxs, details, fieldName, id);
+		}
+	}
+
+	private static void invokeResourceAnimation(MethodVisitor mv, Maxs maxs, Details details, String fieldName, Integer id) {
+		String className = details.getClassName();
+
+		if (id == null || id == 0) {
+			String idName = Utils.normalizeName(fieldName);
+			id = details.getResourceAnimation(idName);
+		}
+
+		mv.visitVarInsn(ALOAD, 0);
+		mv.visitVarInsn(ALOAD, 0);
+		mv.visitMethodInsn(INVOKEVIRTUAL, className, "getActivity", "()Landroid/support/v4/app/FragmentActivity;");
+		mv.visitLdcInsn(id);
+		mv.visitMethodInsn(INVOKESTATIC, "android/view/animation/AnimationUtils", "loadAnimation", "(Landroid/content/Context;I)Landroid/view/animation/Animation;");
+		mv.visitFieldInsn(PUTFIELD, className, fieldName, "Landroid/view/animation/Animation;");
+		maxs.setStack(3);
+		maxs.setLocals(1);
+	}
+
+	private static void invokeResourceInteger(MethodVisitor mv, Maxs maxs, Details details, String fieldName, Integer id) {
+		if (id == null || id == 0) {
+			String idName = Utils.normalizeName(fieldName);
+			id = details.getResourceInteger(idName);
+		}
+
+		invokeResource(mv, maxs, details, fieldName, id, "getInteger");
+	}
+
+	private static void invokeResourceBoolean(MethodVisitor mv, Maxs maxs, Details details, String fieldName, Integer id) {
+		if (id == null || id == 0) {
+			String idName = Utils.normalizeName(fieldName);
+			id = details.getResourceBoolean(idName);
+		}
+
+		invokeResource(mv, maxs, details, fieldName, id, "getBoolean");
+	}
+
+	private static void invokeResourceString(MethodVisitor mv, Maxs maxs, Details details, String fieldName, Integer id) {
+		if (id == null || id == 0) {
+			String idName = Utils.normalizeName(fieldName);
+			id = details.getResourceString(idName);
+		}
+
+		invokeResource(mv, maxs, details, fieldName, id, "getString");
+	}
+
+	private static void invokeResourceIntArray(MethodVisitor mv, Maxs maxs, Details details, String fieldName, Integer id) {
+		if (id == null || id == 0) {
+			String idName = Utils.normalizeName(fieldName);
+			id = details.getResourceArray(idName);
+		}
+
+		invokeResource(mv, maxs, details, fieldName, id, "getIntArray");
+	}
+
+	private static void invokeResourceStringArray(MethodVisitor mv, Maxs maxs, Details details, String fieldName, Integer id) {
+		if (id == null || id == 0) {
+			String idName = Utils.normalizeName(fieldName);
+			id = details.getResourceArray(idName);
+		}
+
+		invokeResource(mv, maxs, details, fieldName, id, "getStringArray");
+	}
+
+	private static void invokeResource(MethodVisitor mv, Maxs maxs, Details details, String fieldName, Integer id, String methodName) {
+		String className = details.getClassName();
+		String fieldDesc = details.getFieldDesc(fieldName);
+
+		mv.visitVarInsn(ALOAD, 0);
+		mv.visitVarInsn(ALOAD, 0);
+		mv.visitMethodInsn(INVOKEVIRTUAL, className, "getActivity", "()Landroid/support/v4/app/FragmentActivity;");
+		mv.visitMethodInsn(INVOKEVIRTUAL, "android/support/v4/app/FragmentActivity", "getResources", "()Landroid/content/res/Resources;");
+		mv.visitLdcInsn(id);
+		mv.visitMethodInsn(INVOKEVIRTUAL, "android/content/res/Resources", methodName, "(I)" + fieldDesc);
+		mv.visitFieldInsn(PUTFIELD, className, fieldName, fieldDesc);
+		maxs.setStack(3);
+		maxs.setLocals(1);
+	}
+
+	private static void invokePrefs(MethodVisitor mv, Maxs maxs, Details details, String fieldName, String prefsName) {
+		String className = details.getClassName();
+
+		if (prefsName == null || "@null".equals(prefsName)) {
+			prefsName = "preferences";
+		}
+
+		mv.visitVarInsn(ALOAD, 0);
+		mv.visitVarInsn(ALOAD, 0);
+		mv.visitMethodInsn(INVOKEVIRTUAL, className, "getActivity", "()Landroid/support/v4/app/FragmentActivity;");
+		mv.visitLdcInsn(prefsName);
+		mv.visitInsn(ICONST_0);
+		mv.visitMethodInsn(INVOKEVIRTUAL, "android/support/v4/app/FragmentActivity", "getSharedPreferences", "(Ljava/lang/String;I)Landroid/content/SharedPreferences;");
+		mv.visitFieldInsn(PUTFIELD, className, fieldName, "Landroid/content/SharedPreferences;");
+		maxs.setStack(4);
+		maxs.setLocals(1);
 	}
 
 }
