@@ -18,6 +18,78 @@ import java.lang.reflect.Proxy;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Receiver is a helper for handling broadcast events.
+ *
+ * Define an event interface like this.
+ * <pre>
+ *   {@code
+ *   public interface ProgressEvent extends IEvent {
+ *     int value();
+ *     ProgressEvent value(int n);
+ *
+ *     int max();
+ *     ProgressEvent max(int n);
+ *
+ *     interface OnProgress {
+ *       void onProgress(ProgressEvent ev);
+ *     }
+ *   }
+ *   }
+ * </pre>
+ *
+ * Receiver will build a proxy implementing the interface.
+ * <pre>
+ *   {@code
+ *   public class ProgressActivity extends Activity implement OnProgress {
+ *     Receiver mReceiver = Receiver.create();
+ *     ProgressBar mBar;
+ *
+ *     public void onResume() {
+ *       super.onResume();
+ *       // first arg is activity, second is object implementing events.
+ *       // object can implement as many events as it likes.
+ *       mReceiver.register(this, this);
+ *     }
+ *
+ *     public void onPause() {
+ *       super.onPause();
+ *       // arg is object implementing events.
+ *       mReceiver.unregister(this);
+ *     }
+ *
+ *     public void onProgress(ProgressEvent ev) {
+ *       mBar.setProgress(ev.value());
+ *       mBar.setMax(ev.max());
+ *     }
+ *   }
+ *   }
+ * </pre>
+ *
+ * Anywhere a context is available can now send events. Multiple objects can be subscribed to the
+ * same event and all will receive it.
+ * <pre>
+ *   {@code
+ *   Receiver.build(ProgressEvent.class)
+ *     .value(50)
+ *     .max(100)
+ *     .broadcast(getContext());
+ *   }
+ * </pre>
+ *
+ * Receiver.build returns a mutable structure that can be re-used, but it is not thread safe.
+ * <pre>
+ *   {@code
+ *   ProgressEvent ev = Receiver.build(ProgressEvent.class).max(100);
+ *   for (int i = 0; i <= 100; i++) {
+ *     ev.value(i).broadcast(getContext());
+ *   }
+ *   }
+ * </pre>
+ *
+ * Receiver is currently implemented via reflection but should likely migrate to source generation
+ * in the future.
+ */
 public class Receiver extends BroadcastReceiver {
 
   private Receiver() {}
@@ -51,12 +123,12 @@ public class Receiver extends BroadcastReceiver {
   private Object mObj;
 
   @SuppressWarnings("unchecked")
-  public static <T extends IEvent> T create(Bundle extras, Class<T> ev) {
+  public static <T extends IEvent> T build(Bundle extras, Class<T> ev) {
     return (T) Proxy.newProxyInstance(ev.getClassLoader(), new Class<?>[]{ev}, new EventHandler(getAction(ev), extras));
   }
 
-  public static <T extends IEvent> T create(Class<T> ev) {
-    return create(new Bundle(), ev);
+  public static <T extends IEvent> T build(Class<T> ev) {
+    return build(new Bundle(), ev);
   }
 
   public void register(Activity act, Object obj) {
@@ -113,7 +185,7 @@ public class Receiver extends BroadcastReceiver {
     if (mEvents.containsKey(intent.getAction())) {
       P p = mEvents.get(intent.getAction());
       try {
-        p.m.invoke(mObj, create(intent.getExtras(), p.c));
+        p.m.invoke(mObj, build(intent.getExtras(), p.c));
       } catch (IllegalAccessException | InvocationTargetException e) {
         e.printStackTrace();
       }
