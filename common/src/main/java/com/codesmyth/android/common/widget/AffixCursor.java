@@ -9,6 +9,36 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * AffixCursor allows attaching of arbitrary elements via types that implement AffixCursor.Affix
+ * while maintaining congruency of the underlying cursor during data access.
+ *
+ * Any number and/or combination of affixes can be added to a cursor.
+ * <pre>
+ *   {@code
+ *   // important! 0 is reserved for cursor items.
+ *   int typeItem = 0;
+ *
+ *   // the first item in the adapter will have viewType of typeHeader
+ *   int typeHeader = 1;
+ *   getCursor().addAffix(new AffixCursor.UniquePositionAffix(typeHeader, 0);
+ *
+ *   // every nth item starting at offset will have viewType of typeAd
+ *   int typeAd = 2;
+ *   int nth = 7;
+ *   int offset = 10;
+ *   getCursor().addAffix(new AffixCursor.OffsetNextAffix(typeAd, offset, nth);
+ *
+ *   // get viewType of a given position to determine how to bind in adapter. This is done
+ *   // automatically in provided adapter implementations.
+ *   getCursor().getViewType(position);
+ *   }
+ * </pre>
+ *
+ * @see com.codesmyth.android.common.widget.FragmentPagerCursorAdapter
+ * @see com.codesmyth.android.common.widget.PagerCursorAdapter
+ * @see com.codesmyth.android.common.widget.RecyclerCursorAdapter
+ */
 public class AffixCursor implements Serializable {
   protected Domain mDomain = new Domain();
   // protected for testing mock cursor, but do not attempt to touch this in sub-class!!!
