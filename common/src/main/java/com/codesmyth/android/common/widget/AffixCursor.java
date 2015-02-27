@@ -9,7 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ConstraintCursor implements Serializable {
+public class AffixCursor implements Serializable {
   protected Domain mDomain = new Domain();
   // protected for testing mock cursor, but do not attempt to touch this in sub-class!!!
   protected Cursor mCursor;
@@ -17,7 +17,7 @@ public class ConstraintCursor implements Serializable {
   private Context mContext;
   private int     mIdColumnIndex;
 
-  public ConstraintCursor(Context context) {
+  public AffixCursor(Context context) {
     mContext = context;
   }
 
@@ -34,8 +34,8 @@ public class ConstraintCursor implements Serializable {
       mCursor = cursor;
       if (mCursor != null) {
         mIdColumnIndex = mCursor.getColumnIndexOrThrow("_id");
-        for (Constraint cn : mDomain.mConstraints) {
-          cn.onSwap(mCursor);
+        for (Affix ax : mDomain.mAffixes) {
+          ax.onSwap(mCursor);
         }
       }
       return true;
@@ -51,20 +51,20 @@ public class ConstraintCursor implements Serializable {
     return mDomain;
   }
 
-  public void addConstraint(Constraint cn) {
-    if (cn.type() == 0) {
+  public void addAffix(Affix ax) {
+    if (ax.type() == 0) {
       throw new IllegalArgumentException("type must not equal 0 as this is implicitly given to default view type.");
     }
-    for (Constraint cn0 : mDomain.mConstraints) {
-      if (cn.type() == cn0.type()) {
-        throw new IllegalArgumentException(String.format("type %s already exists in domain.", cn.type()));
+    for (Affix ax0 : mDomain.mAffixes) {
+      if (ax.type() == ax0.type()) {
+        throw new IllegalArgumentException(String.format("type %s already exists in domain.", ax.type()));
       }
     }
-    mDomain.mConstraints.add(cn);
+    mDomain.mAffixes.add(ax);
   }
 
-  public void clearConstraints() {
-    mDomain.mConstraints.clear();
+  public void clearAffixes() {
+    mDomain.mAffixes.clear();
   }
 
   public boolean moveToNext() {
@@ -172,17 +172,17 @@ public class ConstraintCursor implements Serializable {
     }
     int domainType = mDomain.test(position);
     if (domainType != Domain.NO_MATCH) {
-      return mDomain.getConstraintByType(domainType).id(position);
+      return mDomain.getAffixByType(domainType).id(position);
     }
     moveToPositionOrThrow(position);
     return mCursor.getLong(mIdColumnIndex);
   }
 
   /**
-   * Given a domain length and position, a constraint helps constrain a cursor position to within
+   * Given a domain length and position, an affix helps constrain a cursor position to within
    * a larger length set.
    */
-  public interface Constraint {
+  public interface Affix {
     /**
      * Unique identifier within a domain, used by getId() and affects how setHasStableIds on an
      * adapter functions.
@@ -195,28 +195,28 @@ public class ConstraintCursor implements Serializable {
     public int type();
 
     /**
-     * Tests if the given position matches this constraint.
+     * Tests if the given position matches this affix.
      */
     public boolean test(int position);
 
     /**
      * Returns the number of expected occurrences in a given length. Does not account for
-     * multiple constraints.
+     * multiple affixes.
      */
     public int n(int length);
 
     /**
-     * Callback to allow a constraint to inspect cursor if contents affect outcome of methods.
+     * Callback to allow an affix to inspect cursor if contents affect outcome of methods.
      */
     public void onSwap(Cursor c);
   }
 
-  public static class OffsetNextConstraint implements Constraint {
+  public static class OffsetNextAffix implements Affix {
     private int mType;
     private int mOffset;
     private int mNext;
 
-    public OffsetNextConstraint(int type, int offset, int next) {
+    public OffsetNextAffix(int type, int offset, int next) {
       mType = type;
       mOffset = offset;
       mNext = next;
@@ -247,11 +247,11 @@ public class ConstraintCursor implements Serializable {
     }
   }
 
-  public static class UniquePositionConstraint implements Constraint {
+  public static class UniquePositionAffix implements Affix {
     private int mType;
     private int mPosition;
 
-    public UniquePositionConstraint(int type, int position) {
+    public UniquePositionAffix(int type, int position) {
       mType = type;
       mPosition = position;
     }
@@ -284,7 +284,7 @@ public class ConstraintCursor implements Serializable {
   /**
    * Allows column grouping on a cursor. Expects cursor to be ordered by column.
    */
-  public static class GroupingConstraint implements Constraint {
+  public static class GroupingAffix implements Affix {
     private int           mType;
     private String        mColumnName;
     private Class         mColumnType;
@@ -292,7 +292,7 @@ public class ConstraintCursor implements Serializable {
     private int           mLength;
     private List<Integer> mPositions;
 
-    public GroupingConstraint(int type, String columnName, Class columnType) {
+    public GroupingAffix(int type, String columnName, Class columnType) {
       mType = type;
       mColumnName = columnName;
       mColumnType = columnType;
@@ -351,27 +351,27 @@ public class ConstraintCursor implements Serializable {
   }
 
   /**
-   * A combination of constraints (logical AND of constraints).
+   * A combination of affixes (logical AND of affixes).
    */
   public static class Domain implements Serializable {
     public static final int NO_MATCH = 0;
 
-    private Map<Constraint, Integer> mCache       = new HashMap<>();
-    private List<Constraint>         mConstraints = new ArrayList<>();
+    private Map<Affix, Integer> mCache   = new HashMap<>();
+    private List<Affix>         mAffixes = new ArrayList<>();
 
     public int test(int position) {
-      for (Constraint cn : mConstraints) {
-        if (cn.test(position)) {
-          return cn.type();
+      for (Affix ax : mAffixes) {
+        if (ax.test(position)) {
+          return ax.type();
         }
       }
       return NO_MATCH;
     }
 
-    public Constraint getConstraintByType(int type) {
-      for (Constraint cn : mConstraints) {
-        if (cn.type() == type) {
-          return cn;
+    public Affix getAffixByType(int type) {
+      for (Affix ax : mAffixes) {
+        if (ax.type() == type) {
+          return ax;
         }
       }
       throw new IllegalArgumentException(String.format("type %s not part of domain.", type));
@@ -381,22 +381,22 @@ public class ConstraintCursor implements Serializable {
       mCache.clear();
 
       int x = 0;
-      for (Constraint cn : mConstraints) {
-        int cur = cn.n(length);
-        mCache.put(cn, cur);
+      for (Affix ax : mAffixes) {
+        int cur = ax.n(length);
+        mCache.put(ax, cur);
         x += cur;
       }
 
       while (true) {
         int n = 0;
-        for (Constraint cn : mConstraints) {
+        for (Affix ax : mAffixes) {
           int last = 0;
-          if (mCache.containsKey(cn)) {
-            last = mCache.get(cn);
+          if (mCache.containsKey(ax)) {
+            last = mCache.get(ax);
           }
-          int cur = cn.n(length + x);
+          int cur = ax.n(length + x);
           n += (cur - last);
-          mCache.put(cn, cur);
+          mCache.put(ax, cur);
         }
         x += n;
         if (n == 0) {
@@ -411,14 +411,14 @@ public class ConstraintCursor implements Serializable {
      * Converts position from inflated length to cursor position.
      */
     public int convert(int position) {
-      for (Constraint cn : mConstraints) {
-        if (cn.test(position)) {
+      for (Affix ax : mAffixes) {
+        if (ax.test(position)) {
           throw new IllegalArgumentException(String.format("Argument (%s) does not have a real position.", position));
         }
       }
       int newPos = position;
-      for (Constraint cn : mConstraints) {
-        newPos -= cn.n(position);
+      for (Affix ax : mAffixes) {
+        newPos -= ax.n(position);
       }
       return newPos;
     }

@@ -11,10 +11,10 @@ import android.view.ViewGroup;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.codesmyth.android.common.widget.ConstraintCursor.OffsetNextConstraint;
-import static com.codesmyth.android.common.widget.ConstraintCursor.UniquePositionConstraint;
+import static com.codesmyth.android.common.widget.AffixCursor.OffsetNextAffix;
+import static com.codesmyth.android.common.widget.AffixCursor.UniquePositionAffix;
 
-public class ConstraintCursorTest extends AndroidTestCase {
+public class AffixCursorTest extends AndroidTestCase {
 
     public static final int TYPE_DEFAULT = 0;
     public static final int TYPE_FIRST = 1;
@@ -28,7 +28,7 @@ public class ConstraintCursorTest extends AndroidTestCase {
     public void testGrouping() {
         int cursorLen = 18;
         MockCursorAdapter adapter = new MockCursorAdapter(getContext(), cursorLen, true);
-        adapter.getCursor().addConstraint(new ConstraintCursor.GroupingConstraint(TYPE_FIRST, "foo", String.class));
+        adapter.getCursor().addAffix(new AffixCursor.GroupingAffix(TYPE_FIRST, "foo", String.class));
         adapter.forceSwap();
 
         int expectedFakeLen = 22;
@@ -53,7 +53,7 @@ public class ConstraintCursorTest extends AndroidTestCase {
     public void testUniquePosition() {
         int cursorLen = 20;
         MockCursorAdapter adapter = new MockCursorAdapter(getContext(), cursorLen);
-        adapter.getCursor().addConstraint(new UniquePositionConstraint(TYPE_FIRST, 0));
+        adapter.getCursor().addAffix(new UniquePositionAffix(TYPE_FIRST, 0));
 
         int expectedFakeLen = 21;
         assertEquals("fake length", expectedFakeLen, adapter.getItemCount());
@@ -86,7 +86,7 @@ public class ConstraintCursorTest extends AndroidTestCase {
     public void testDomain5Length() {
         int cursorLen = 5;
         MockCursorAdapter adapter = new MockCursorAdapter(getContext(), cursorLen);
-        adapter.getCursor().addConstraint(new OffsetNextConstraint(TYPE_FIRST, 0, 10));
+        adapter.getCursor().addAffix(new OffsetNextAffix(TYPE_FIRST, 0, 10));
         int expectedFakeLen = 6;
         assertEquals("fake length", expectedFakeLen, adapter.getItemCount());
     }
@@ -94,8 +94,8 @@ public class ConstraintCursorTest extends AndroidTestCase {
     public void testDomainPosition() {
         int cursorLen = 20;
         MockCursorAdapter adapter = new MockCursorAdapter(getContext(), cursorLen);
-        adapter.getCursor().addConstraint(new UniquePositionConstraint(TYPE_FIRST, 0));
-        adapter.getCursor().addConstraint(new OffsetNextConstraint(TYPE_SECOND, 2, 10));
+        adapter.getCursor().addAffix(new UniquePositionAffix(TYPE_FIRST, 0));
+        adapter.getCursor().addAffix(new OffsetNextAffix(TYPE_SECOND, 2, 10));
 
         int expectedFakeLen = 24;
         assertEquals("fake length", expectedFakeLen, adapter.getItemCount());
@@ -115,12 +115,12 @@ public class ConstraintCursorTest extends AndroidTestCase {
     public void testDomain20() {
         int cursorLen = 20;
         MockCursorAdapter adapter = new MockCursorAdapter(getContext(), cursorLen);
-        adapter.getCursor().addConstraint(new OffsetNextConstraint(TYPE_FIRST, 2, 10));
-        adapter.getCursor().addConstraint(new OffsetNextConstraint(TYPE_SECOND, 7, 10));
+        adapter.getCursor().addAffix(new OffsetNextAffix(TYPE_FIRST, 2, 10));
+        adapter.getCursor().addAffix(new OffsetNextAffix(TYPE_SECOND, 7, 10));
 
-        // constraint at positions (2, 12) and constraint at positions (7, 17).
-        // 4 constraints plus 20 cursor length == 24
-        // but this opens a spot for an additional constraint at position (22),
+        // affix at positions (2, 12) and affix at positions (7, 17).
+        // 4 affixes plus 20 cursor length == 24
+        // but this opens a spot for an additional affix at position (22),
         // so expected length is 25.
         int expectedFakeLen = 25;
         assertEquals("fake length", expectedFakeLen, adapter.getItemCount());
@@ -155,8 +155,8 @@ public class ConstraintCursorTest extends AndroidTestCase {
     public void testDomain1000() {
         int cursorLen = 1000;
         MockCursorAdapter adapter = new MockCursorAdapter(getContext(), cursorLen);
-        adapter.getCursor().addConstraint(new OffsetNextConstraint(TYPE_FIRST, 2, 10));
-        adapter.getCursor().addConstraint(new OffsetNextConstraint(TYPE_SECOND, 7, 10));
+        adapter.getCursor().addAffix(new OffsetNextAffix(TYPE_FIRST, 2, 10));
+        adapter.getCursor().addAffix(new OffsetNextAffix(TYPE_SECOND, 7, 10));
 
         // pre-calculated
         int expectedFakeLen = 1250;

@@ -14,12 +14,12 @@ public abstract class RecyclerCursorAdapter<A extends RecyclerView.Adapter>
 
   private AtomicBoolean mHintRemoveInsert = new AtomicBoolean(false);
 
-  private ConstraintCursor mCursor;
-  private int              mLoaderId;
+  private AffixCursor mCursor;
+  private int         mLoaderId;
 
   public RecyclerCursorAdapter(Context context) {
     super();
-    mCursor = new ConstraintCursor(context);
+    mCursor = new AffixCursor(context);
     mLoaderId = LoaderId.next();
     setHasStableIds(true);
   }
@@ -31,7 +31,7 @@ public abstract class RecyclerCursorAdapter<A extends RecyclerView.Adapter>
 
   @Override
   public void onBindViewHolder(ViewBinder<A> holder, int position) {
-    if (mCursor.getDomain().test(position) == ConstraintCursor.Domain.NO_MATCH) {
+    if (mCursor.getDomain().test(position) == AffixCursor.Domain.NO_MATCH) {
       mCursor.moveToPositionOrThrow(position);
     }
     holder.bind((A) this, position);
@@ -70,7 +70,7 @@ public abstract class RecyclerCursorAdapter<A extends RecyclerView.Adapter>
     }
   }
 
-  public ConstraintCursor getCursor() {
+  public AffixCursor getCursor() {
     return mCursor;
   }
 

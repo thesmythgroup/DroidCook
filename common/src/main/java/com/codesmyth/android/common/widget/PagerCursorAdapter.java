@@ -13,15 +13,15 @@ import java.io.Serializable;
 public abstract class PagerCursorAdapter extends PagerAdapter
     implements LoaderManager.LoaderCallbacks<Cursor>, Serializable {
 
-  private ConstraintCursor mCursor;
-  private int              mLoaderId;
+  private AffixCursor mCursor;
+  private int         mLoaderId;
 
   public PagerCursorAdapter(Context context) {
-    mCursor = new ConstraintCursor(context);
+    mCursor = new AffixCursor(context);
     mLoaderId = LoaderId.next();
   }
 
-  public ConstraintCursor getCursor() {
+  public AffixCursor getCursor() {
     return mCursor;
   }
 

@@ -10,16 +10,16 @@ import android.support.v4.content.Loader;
 public abstract class FragmentPagerCursorAdapter extends FragmentStatePagerAdapter
     implements LoaderManager.LoaderCallbacks<Cursor> {
 
-  private ConstraintCursor mCursor;
-  private int              mLoaderId;
+  private AffixCursor mCursor;
+  private int         mLoaderId;
 
   public FragmentPagerCursorAdapter(FragmentManager fm, Context context) {
     super(fm);
-    mCursor = new ConstraintCursor(context);
+    mCursor = new AffixCursor(context);
     mLoaderId = LoaderId.next();
   }
 
-  public ConstraintCursor getCursor() {
+  public AffixCursor getCursor() {
     return mCursor;
   }
 
