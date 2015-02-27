@@ -81,6 +81,10 @@ public class ConstraintCursor implements Serializable {
     return mCursor != null && mCursor.moveToPosition(mDomain.convert(position));
   }
 
+  public int getPosition() {
+    return mCursor != null ? mCursor.getPosition() : -1;
+  }
+
   public byte[] getBlob(int columnIndex) {
     return mCursor.getBlob(columnIndex);
   }
