@@ -4,9 +4,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class LoaderId {
 
-    private static final AtomicInteger mLast = new AtomicInteger(0);
+  private static final AtomicInteger mLast = new AtomicInteger(0);
 
-    public static int next() {
-        return mLast.incrementAndGet();
-    }
+  public static int next() {
+    return mLast.incrementAndGet();
+  }
 }

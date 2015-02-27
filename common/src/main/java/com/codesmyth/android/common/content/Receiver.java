@@ -20,7 +20,7 @@ import java.util.Map;
 
 /**
  * Receiver is a helper for handling broadcast events.
- *
+ * <p/>
  * Define an event interface like this.
  * <pre>
  *   {@code
@@ -37,7 +37,7 @@ import java.util.Map;
  *   }
  *   }
  * </pre>
- *
+ * <p/>
  * Receiver will build a proxy implementing the interface.
  * <pre>
  *   {@code
@@ -65,7 +65,7 @@ import java.util.Map;
  *   }
  *   }
  * </pre>
- *
+ * <p/>
  * Anywhere a context is available can now send events. Multiple objects can be subscribed to the
  * same event and all will receive it.
  * <pre>
@@ -76,7 +76,7 @@ import java.util.Map;
  *     .broadcast(getContext());
  *   }
  * </pre>
- *
+ * <p/>
  * Receiver.build returns a mutable structure that can be re-used, but it is not thread safe.
  * <pre>
  *   {@code
@@ -86,7 +86,7 @@ import java.util.Map;
  *   }
  *   }
  * </pre>
- *
+ * <p/>
  * Receiver is currently implemented via reflection but should likely migrate to source generation
  * in the future.
  */
