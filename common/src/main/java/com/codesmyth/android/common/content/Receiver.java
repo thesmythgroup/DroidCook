@@ -205,6 +205,13 @@ public class Receiver extends BroadcastReceiver {
     mPrimitives.put("Long", long.class);
   }
 
+  private static String getPutMethodName(String name) {
+    if ("Integer".equals(name)) {
+      return "putInt";
+    }
+    return "put" + name;
+  }
+
   static class EventHandler implements InvocationHandler {
     private String mAction;
     private Bundle mExtras;
@@ -229,7 +236,7 @@ public class Receiver extends BroadcastReceiver {
           value = mPrimitives.get(name);
         }
 
-        Method put = mExtras.getClass().getMethod("put" + name, String.class, value);
+        Method put = mExtras.getClass().getMethod(getPutMethodName(name), String.class, value);
         put.invoke(mExtras, getKey(method), args[0]);
         return proxy;
       }
