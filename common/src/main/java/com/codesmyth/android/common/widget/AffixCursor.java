@@ -12,7 +12,7 @@ import java.util.Map;
 /**
  * AffixCursor allows attaching of arbitrary elements via types that implement AffixCursor.Affix
  * while maintaining congruency of the underlying cursor during data access.
- *
+ * <p/>
  * Any number and/or combination of affixes can be added to a cursor.
  * <pre>
  *   {@code
