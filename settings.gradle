@@ -1,1 +1,1 @@
-include ':common', ':asm'
+include ':common', ':asm', ':test'

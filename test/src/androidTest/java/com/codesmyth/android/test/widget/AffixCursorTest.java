@@ -1,4 +1,4 @@
-package com.codesmyth.android.common.widget;
+package com.codesmyth.android.test.widget;
 
 import android.content.Context;
 import android.os.Bundle;
@@ -7,6 +7,8 @@ import android.support.v7.widget.RecyclerView;
 import android.test.AndroidTestCase;
 import android.test.mock.MockCursor;
 import android.view.ViewGroup;
+import com.codesmyth.android.common.widget.AffixCursor;
+import com.codesmyth.android.common.widget.RecyclerCursorAdapter;
 
 import java.util.ArrayList;
 import java.util.List;

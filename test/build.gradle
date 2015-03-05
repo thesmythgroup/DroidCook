@@ -6,9 +6,7 @@ buildscript {
         classpath 'com.android.tools.build:gradle:1.1.0'
     }
 }
-
-apply plugin: 'com.android.library'
-apply plugin: 'maven-publish'
+apply plugin: 'com.android.application'
 
 repositories {
     jcenter()
@@ -24,10 +22,15 @@ android {
     }
 
     defaultConfig {
-        minSdkVersion 9
+        applicationId "com.codesmyth.android.test"
+        minSdkVersion 10
         targetSdkVersion 21
         versionCode 1
         versionName "1.0"
+    }
+
+    packagingOptions {
+        exclude 'LICENSE.txt'
     }
 
     buildTypes {
@@ -36,38 +39,12 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
-
-    lintOptions {
-        abortOnError false
-    }
 }
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile project(':common')
     compile 'com.android.support:appcompat-v7:21.0.3'
-    compile 'com.android.support:support-v4:21.0.3'
-    compile 'com.android.support:recyclerview-v7:21.0.3'
-    compile 'com.google.guava:guava:18.0'
-}
-
-task sourceJar(type: Jar) {
-    from android.sourceSets.main.java.srcDirs
-    classifier "source"
-}
-
-publishing {
-    publications {
-        common(MavenPublication) {
-            groupId 'com.codesmyth.android'
-            artifactId 'common'
-            version '0.1-SNAPSHOT'
-            artifact(sourceJar)
-            artifact("$buildDir/outputs/aar/common-release.aar")
-        }
-    }
-    repositories {
-        maven {
-            url "$buildDir/repo"
-        }
-    }
+    testCompile 'junit:junit:4.12'
+    androidTestCompile 'com.android.support.test:testing-support-lib:0.1'
 }
