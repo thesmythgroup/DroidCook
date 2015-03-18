@@ -6,10 +6,13 @@ buildscript {
         classpath 'com.android.tools.build:gradle:1.1.0'
     }
 }
+
 apply plugin: 'com.android.application'
+apply plugin: 'android-apt'
 
 repositories {
     jcenter()
+    mavenLocal()
 }
 
 android {
@@ -22,7 +25,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.codesmyth.android.test"
+        applicationId "com.codesmyth.droidcook.test"
         minSdkVersion 10
         targetSdkVersion 21
         versionCode 1
@@ -31,6 +34,10 @@ android {
 
     packagingOptions {
         exclude 'LICENSE.txt'
+    }
+
+    lintOptions {
+        abortOnError false
     }
 
     buildTypes {
@@ -44,6 +51,9 @@ android {
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile project(':common')
+    compile project(':api')
+    apt project(':compiler')
+
     compile 'com.android.support:appcompat-v7:21.0.3'
     testCompile 'junit:junit:4.12'
     androidTestCompile 'com.android.support.test:testing-support-lib:0.1'

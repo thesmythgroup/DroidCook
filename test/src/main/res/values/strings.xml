@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Test</string>
+    <string name="click_me">Click Me</string>
+    <string name="throw_exception">Throw Exception</string>
 </resources>
