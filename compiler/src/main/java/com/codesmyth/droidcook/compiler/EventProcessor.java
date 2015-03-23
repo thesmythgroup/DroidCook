@@ -10,13 +10,15 @@ import com.squareup.javapoet.*;
 import javax.annotation.processing.*;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.*;
+import javax.lang.model.type.ArrayType;
+import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
 import java.io.IOException;
-import java.util.HashMap;
+import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 @AutoService(Processor.class)
@@ -50,22 +52,27 @@ public class EventProcessor extends AbstractProcessor {
 
   @Override
   public boolean process(Set<? extends TypeElement> set, RoundEnvironment roundEnvironment) {
-    for (Element el : roundEnvironment.getElementsAnnotatedWith(Event.class)) {
-      if (el.getKind() != ElementKind.INTERFACE && !el.getModifiers().contains(Modifier.ABSTRACT)) {
-        mMessager.printMessage(Diagnostic.Kind.ERROR, "Only interfaces or abstract classes accepted for @Event", el);
+    try {
+      for (Element el : roundEnvironment.getElementsAnnotatedWith(Event.class)) {
+        if (el.getKind() != ElementKind.INTERFACE && !el.getModifiers().contains(Modifier.ABSTRACT)) {
+          mMessager.printMessage(Diagnostic.Kind.ERROR, "Only interfaces or abstract classes accepted for @Event", el);
+        }
+        try {
+          JavaFile.builder(mElementUtils.getPackageOf(el).toString(), makeType((TypeElement) el))
+              .build()
+              .writeTo(mFiler);
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
       }
-      try {
-        JavaFile.builder(mElementUtils.getPackageOf(el).toString(), makeType((TypeElement) el))
-            .build()
-            .writeTo(mFiler);
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
+      return true;
+    } catch (ProcessorException | ClassNotFoundException e) {
+      mMessager.printMessage(Diagnostic.Kind.ERROR, e.getMessage());
+      return true;
     }
-    return true;
   }
 
-  public TypeSpec makeType(TypeElement el) {
+  public TypeSpec makeType(TypeElement el) throws ProcessorException, ClassNotFoundException {
     String className = "Event_" + el.getSimpleName();
 
     TypeSpec.Builder event = TypeSpec.classBuilder(className)
@@ -107,17 +114,13 @@ public class EventProcessor extends AbstractProcessor {
       String key = ch.getSimpleName().toString();
       ExecutableElement ex = (ExecutableElement) ch;
 
-      TypeName paramType = ex.getReturnType().getKind().isPrimitive()
-          ? ClassName.get(mTypeUtils.getPrimitiveType(ex.getReturnType().getKind()))
-          : ClassName.bestGuess(ex.getReturnType().toString());
-
-      ClassName boxedType = ex.getReturnType().getKind().isPrimitive()
-          ? ClassName.bestGuess(mTypeUtils.boxedClass(mTypeUtils.getPrimitiveType(ex.getReturnType().getKind())).toString())
-          : ClassName.bestGuess(ex.getReturnType().toString());
+      // TODO(d) handle unboxing in future
+      TypeName paramType = mirrorToType(ex.getReturnType());
+      TypeName boxedType = mirrorToType(ex.getReturnType());
 
       MethodSpec get = MethodSpec.methodBuilder(key)
           .addModifiers(Modifier.PUBLIC)
-          .addStatement("return ($T) mExtras.get($S)", boxedType, key)
+          .addStatement("return mExtras.$L($S)", findGetMethod(boxedType), key)
           .returns(paramType)
           .build();
 
@@ -127,7 +130,7 @@ public class EventProcessor extends AbstractProcessor {
     return event.build();
   }
 
-  public TypeSpec makeTypeBuilder(TypeElement el) {
+  public TypeSpec makeTypeBuilder(TypeElement el) throws ProcessorException, ClassNotFoundException {
     FieldSpec extras = FieldSpec.builder(Bundle.class, "mExtras")
         .addModifiers(Modifier.PRIVATE, Modifier.FINAL)
         .initializer("new $T()", Bundle.class)
@@ -165,19 +168,15 @@ public class EventProcessor extends AbstractProcessor {
       String key = ch.getSimpleName().toString();
       ExecutableElement ex = (ExecutableElement) ch;
 
-      TypeName paramType = ex.getReturnType().getKind().isPrimitive()
-          ? ClassName.get(mTypeUtils.getPrimitiveType(ex.getReturnType().getKind()))
-          : ClassName.bestGuess(ex.getReturnType().toString());
-
-      ClassName boxedType = ex.getReturnType().getKind().isPrimitive()
-          ? ClassName.bestGuess(mTypeUtils.boxedClass(mTypeUtils.getPrimitiveType(ex.getReturnType().getKind())).toString())
-          : ClassName.bestGuess(ex.getReturnType().toString());
+      // TODO(d) handle unboxing in future
+      TypeName paramType = mirrorToType(ex.getReturnType());
+      TypeName boxedType = mirrorToType(ex.getReturnType());
 
       MethodSpec set = MethodSpec.methodBuilder(key)
           .addModifiers(Modifier.PUBLIC)
           .returns(ClassName.bestGuess(className))
           .addParameter(paramType, "x")
-          .addStatement("mExtras.$L($S, x)", mBundlePutMap.get(boxedType.toString()), key)
+          .addStatement("mExtras.$L($S, x)", findPutMethod(boxedType), key)
           .addStatement("return this")
           .build();
 
@@ -187,17 +186,50 @@ public class EventProcessor extends AbstractProcessor {
     return event.build();
   }
 
-  private static Map<String, String> mBundlePutMap = new HashMap<>();
+  TypeName mirrorToType(TypeMirror type) throws ProcessorException {
+    TypeName result;
+    boolean isArray = type instanceof ArrayType;
 
-  static {
-    mBundlePutMap.put("java.lang.String", "putString");
-    mBundlePutMap.put("java.lang.Boolean", "putBoolean");
-    mBundlePutMap.put("java.lang.Byte", "putByte");
-    mBundlePutMap.put("java.lang.Character", "putChar");
-    mBundlePutMap.put("java.lang.Integer", "putInt");
-    mBundlePutMap.put("java.lang.Short", "putShort");
-    mBundlePutMap.put("java.lang.Float", "putFloat");
-    mBundlePutMap.put("java.lang.Double", "putDouble");
-    mBundlePutMap.put("java.lang.Long", "putLong");
+    if (isArray) {
+      result = ArrayTypeName.get((ArrayType) type);
+    } else if (type.getKind().isPrimitive()) {
+      result = TypeName.get(type);
+    } else {
+      result = TypeName.get(type);
+    }
+    return result;
+  }
+
+  private String findGetMethod(TypeName typeName) throws ClassNotFoundException, ProcessorException {
+    for (Method m : Bundle.class.getMethods()) {
+      if (!m.getName().startsWith("get")) {
+        continue;
+      }
+      Type[] params = m.getGenericParameterTypes();
+      if (params.length != 0 && params[0].equals(String.class)) {
+        TypeName genReturnType = TypeName.get(m.getGenericReturnType());
+        TypeName returnType = TypeName.get(m.getReturnType());
+        if (genReturnType.equals(typeName) || returnType.equals(typeName)) {
+          return m.getName();
+        }
+      }
+    }
+    throw new ProcessorException("Failed to find get method for " + typeName);
+  }
+
+  private String findPutMethod(TypeName typeName) throws ClassNotFoundException, ProcessorException {
+    for (Method m : Bundle.class.getMethods()) {
+      if (!m.getName().startsWith("put")) {
+        continue;
+      }
+      Type[] params = m.getGenericParameterTypes();
+      if (params.length == 2 && params[0].equals(String.class)) {
+        TypeName param = TypeName.get(params[1]);
+        if (param.equals(typeName)) {
+          return m.getName();
+        }
+      }
+    }
+    throw new ProcessorException("Failed to find put method for " + typeName);
   }
 }

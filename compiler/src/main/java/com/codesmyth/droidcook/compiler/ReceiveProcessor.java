@@ -27,8 +27,6 @@ public class ReceiveProcessor extends AbstractProcessor {
   private Filer    mFiler;
   private Messager mMessager;
 
-  class ProcessorException extends Exception {};
-
   private TypeSpec.Builder mFactory;
 
   private HashMap<TypeElement, Set<ExecutableElement>> mMap;
@@ -158,7 +156,7 @@ public class ReceiveProcessor extends AbstractProcessor {
       List<? extends VariableElement> params = method.getParameters();
       if (params.size() != 1) {
         mMessager.printMessage(Diagnostic.Kind.ERROR, "@Receive method should only have 1 param", method);
-        throw new ProcessorException();
+        throw new ProcessorException("@Receive method should only have 1 param");
       }
       Element param = mTypeUtils.asElement(params.get(0).asType());
       code.add("case $S:\n", param.toString());
@@ -179,7 +177,7 @@ public class ReceiveProcessor extends AbstractProcessor {
       List<? extends VariableElement> params = method.getParameters();
       if (params.size() != 1) {
         mMessager.printMessage(Diagnostic.Kind.ERROR, "@Receive method should only have 1 param", method);
-        throw new ProcessorException();
+        throw new ProcessorException("@Receive method should only have 1 param");
       }
       code.addStatement("filter.addAction($S)", params.get(0).asType().toString());
     }
