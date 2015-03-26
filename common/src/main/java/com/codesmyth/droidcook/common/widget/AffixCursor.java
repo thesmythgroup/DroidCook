@@ -39,6 +39,7 @@ import java.util.Map;
  * @see com.codesmyth.droidcook.common.widget.PagerCursorAdapter
  * @see com.codesmyth.droidcook.common.widget.RecyclerCursorAdapter
  */
+@SuppressWarnings("unused")
 public class AffixCursor implements Serializable {
 
   public static final int NO_EMPTY_VIEW_TYPE = -1;
@@ -50,7 +51,7 @@ public class AffixCursor implements Serializable {
   private Context mContext;
   private int     mIdColumnIndex;
 
-  private int     mEmptyViewType = NO_EMPTY_VIEW_TYPE;
+  private int mEmptyViewType = NO_EMPTY_VIEW_TYPE;
 
   public AffixCursor(Context context) {
     mContext = context;
@@ -235,28 +236,28 @@ public class AffixCursor implements Serializable {
      * Unique identifier within a domain, used by getId() and affects how setHasStableIds on an
      * adapter functions.
      */
-    public long id(int position);
+    long id(int position);
 
     /**
      * Unique view type identifier within a domain, typically identifies viewType defined in adapter.
      */
-    public int type();
+    int type();
 
     /**
      * Tests if the given position matches this affix.
      */
-    public boolean test(int position);
+    boolean test(int position);
 
     /**
      * Returns the number of expected occurrences in a given length. Does not account for
      * multiple affixes.
      */
-    public int n(int length);
+    int n(int length);
 
     /**
      * Callback to allow an affix to inspect cursor if contents affect outcome of methods.
      */
-    public void onSwap(Cursor c);
+    void onSwap(Cursor c);
   }
 
   public static class OffsetNextAffix implements Affix {
@@ -380,7 +381,7 @@ public class AffixCursor implements Serializable {
       mColumnIndex = c.getColumnIndexOrThrow(mColumnName);
       Object lastValue = null;
       for (boolean ok = c.moveToFirst(); ok; ok = c.moveToNext()) {
-        Object value = null;
+        Object value;
         if (mColumnType == String.class) {
           value = c.getString(mColumnIndex);
         } else if (mColumnType == Integer.class) {
