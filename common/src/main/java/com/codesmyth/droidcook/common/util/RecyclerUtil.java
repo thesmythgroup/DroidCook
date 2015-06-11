@@ -113,6 +113,10 @@ public class RecyclerUtil {
     @Override
     public void onTouchEvent(RecyclerView rv, MotionEvent e) {
     }
+
+    @Override
+    public void onRequestDisallowInterceptTouchEvent(boolean b) {
+    }
   }
 
   /**

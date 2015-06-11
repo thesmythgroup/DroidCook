@@ -66,6 +66,7 @@ public class AffixCursor implements Serializable {
   }
 
   public boolean swap(Cursor cursor) {
+    // TODO generate notify events
     if (mCursor != cursor) {
       mCursor = cursor;
       if (mCursor != null) {
@@ -126,6 +127,24 @@ public class AffixCursor implements Serializable {
 
   public boolean moveToPosition(int position) {
     return mCursor != null && mCursor.moveToPosition(mDomain.convert(position));
+  }
+
+  /**
+   * The behaviour of this method is largely undefined, use with caution. Given that position arg
+   * passes domain test, attempt to find and move to next valid cursor position.
+   * @param position
+   */
+  public void moveToNextValidPositionFrom(int position) {
+    if (mDomain.test(position) == Domain.NO_MATCH) {
+      throw new IllegalStateException("Argument position should match an Affixable.");
+    }
+    for (int pos = position; pos < getCount(); pos++) {
+      if (mDomain.test(pos) == Domain.NO_MATCH) {
+        moveToPositionOrThrow(pos);
+        return;
+      }
+    }
+    throw new IllegalStateException("No next valid position was found from position " + position);
   }
 
   public int getPosition() {
@@ -283,7 +302,8 @@ public class AffixCursor implements Serializable {
 
     @Override
     public boolean test(int position) {
-      return (position - mOffset) % mNext == 0;
+      int n = position - mOffset;
+      return n >= 0 && n % mNext == 0;
     }
 
     @Override
@@ -322,7 +342,9 @@ public class AffixCursor implements Serializable {
 
     @Override
     public int n(int length) {
-      return mPosition < length ? 1 : 0;
+      // <= allows for appending an item that trails where-as < contains unique within data set.
+      // Still check for zero length and return zero to avoid adding to an empty/null cursor.
+      return length == 0 ? 0 : mPosition <= length ? 1 : 0;
     }
 
     @Override
@@ -389,13 +411,13 @@ public class AffixCursor implements Serializable {
         } else {
           throw new IllegalStateException(String.format("ColumnType of %s not supported.", mColumnType));
         }
-        if (value != lastValue) {
+        if (!value.equals(lastValue)) {
           mPositions.add(c.getPosition() + mLength);
           mLength++;
         }
         lastValue = value;
       }
-      c.moveToPosition(0);
+      c.moveToPosition(-1);
     }
   }
 

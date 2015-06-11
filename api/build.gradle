@@ -2,7 +2,7 @@ apply plugin: 'java'
 apply plugin: 'maven-publish'
 
 sourceCompatibility = 1.7
-version = '0.2'
+version = '0.3-SNAPSHOT'
 
 repositories {
     mavenCentral()
@@ -17,7 +17,7 @@ publishing {
         asm(MavenPublication) {
             groupId 'com.codesmyth.droidcook'
             artifactId 'api'
-            version '0.2'
+            version '0.3-SNAPSHOT'
             from components.java
         }
     }

@@ -45,9 +45,9 @@ android {
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile 'javax.inject:javax.inject:1'
-    compile 'com.android.support:appcompat-v7:22.0.0'
-    compile 'com.android.support:support-v4:22.0.0'
-    compile 'com.android.support:recyclerview-v7:22.0.0'
+    compile 'com.android.support:appcompat-v7:22.2.0'
+    compile 'com.android.support:support-v4:22.2.0'
+    compile 'com.android.support:recyclerview-v7:22.2.0'
     compile 'com.google.guava:guava:18.0'
 }
 
@@ -61,7 +61,7 @@ publishing {
         common(MavenPublication) {
             groupId 'com.codesmyth.droidcook'
             artifactId 'common'
-            version '0.2'
+            version '0.3-SNAPSHOT'
             artifact(sourceJar)
             artifact("$buildDir/outputs/aar/common-release.aar")
         }

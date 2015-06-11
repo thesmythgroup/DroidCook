@@ -9,18 +9,25 @@ import android.view.Display;
 import android.view.WindowManager;
 
 public class Device {
-  public static WindowManager windowManager(Context context) {
-    return (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+
+  private Context mContext;
+
+  public Device(Context context) {
+    mContext = context;
   }
 
-  public static DisplayMetrics displayMetrics(Context context) {
+  public WindowManager windowManager() {
+    return (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
+  }
+
+  public DisplayMetrics displayMetrics() {
     DisplayMetrics metrics = new DisplayMetrics();
-    windowManager(context).getDefaultDisplay().getMetrics(metrics);
+    windowManager().getDefaultDisplay().getMetrics(metrics);
     return metrics;
   }
 
-  public static Point displaySize(Context context) {
-    Display display = windowManager(context).getDefaultDisplay();
+  public Point displaySize() {
+    Display display = windowManager().getDefaultDisplay();
     Point size = new Point();
     if (Build.VERSION.SDK_INT >= 13) {
       display.getSize(size);
@@ -31,11 +38,11 @@ public class Device {
     return size;
   }
 
-  public static int dipValue(Context context, float x) {
-    return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, x, displayMetrics(context));
+  public int dipValue(float x) {
+    return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, x, displayMetrics());
   }
 
-  public static int dipValue2(Context context, float x) {
-    return Math.round(x * displayMetrics(context).density + 0.5f);
+  public int dipValue2(float x) {
+    return Math.round(x * displayMetrics().density + 0.5f);
   }
 }

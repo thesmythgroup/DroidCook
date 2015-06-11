@@ -39,6 +39,22 @@ public class AffixCursorTest extends AndroidTestCase {
     assertEquals("cursor length", 0, adapter.getItemCount());
   }
 
+  public void testAffixLast() {
+    int cursorLen = 5;
+    MockCursorAdapter adapter = new MockCursorAdapter(getContext(), cursorLen, true);
+    adapter.getCursor().addAffix(new UniquePositionAffix(TYPE_FIRST, 5));
+
+    assertEquals("cursor length", 6, adapter.getItemCount());
+  }
+
+  public void testOffset3Next3() {
+    int cursorLen = 7;
+    MockCursorAdapter adapter = new MockCursorAdapter(getContext(), cursorLen, true);
+    adapter.getCursor().addAffix(new OffsetNextAffix(TYPE_FIRST, 3, 3));
+
+    assertEquals("position zero view type", TYPE_DEFAULT, adapter.getItemViewType(0));
+  }
+
   public void testGrouping() {
     int cursorLen = 18;
     MockCursorAdapter adapter = new MockCursorAdapter(getContext(), cursorLen, true);
