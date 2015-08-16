@@ -9,6 +9,7 @@ buildscript {
 
 apply plugin: 'com.android.library'
 apply plugin: 'maven-publish'
+apply plugin: 'com.jfrog.bintray'
 
 repositories {
     jcenter()
@@ -61,7 +62,7 @@ publishing {
         common(MavenPublication) {
             groupId 'com.codesmyth.droidcook'
             artifactId 'common'
-            version '0.3-SNAPSHOT'
+            version '0.3'
             artifact(sourceJar)
             artifact("$buildDir/outputs/aar/common-release.aar")
         }
@@ -70,5 +71,17 @@ publishing {
         maven {
             url "$buildDir/repo"
         }
+    }
+}
+
+bintray {
+    user = System.getenv('BINTRAY_USER')
+    key = System.getenv('BINTRAY_KEY')
+    publications = ['common']
+    pkg {
+        repo = 'maven'
+        name = 'droidcook'
+        licenses = ['BSD']
+        vcsUrl = 'https://github.com/dskinner/DroidCook.git'
     }
 }

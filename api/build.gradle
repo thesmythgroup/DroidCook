@@ -1,8 +1,9 @@
 apply plugin: 'java'
 apply plugin: 'maven-publish'
+apply plugin: 'com.jfrog.bintray'
 
 sourceCompatibility = 1.7
-version = '0.3-SNAPSHOT'
+version = '0.3'
 
 repositories {
     mavenCentral()
@@ -14,10 +15,10 @@ dependencies {
 
 publishing {
     publications {
-        asm(MavenPublication) {
+        api(MavenPublication) {
             groupId 'com.codesmyth.droidcook'
             artifactId 'api'
-            version '0.3-SNAPSHOT'
+            version '0.3'
             from components.java
         }
     }
@@ -25,5 +26,17 @@ publishing {
         maven {
             url "$buildDir/repo"
         }
+    }
+}
+
+bintray {
+    user = System.getenv('BINTRAY_USER')
+    key = System.getenv('BINTRAY_KEY')
+    publications = ['api']
+    pkg {
+        repo = 'maven'
+        name = 'droidcook'
+        licenses = ['BSD']
+        vcsUrl = 'https://github.com/dskinner/DroidCook.git'
     }
 }
