@@ -73,7 +73,7 @@ public class EventProcessor extends AbstractProcessor {
   }
 
   public TypeSpec makeType(TypeElement el) throws ProcessorException, ClassNotFoundException {
-    String className = "Event_" + el.getSimpleName();
+    String className = "Event" + el.getSimpleName();
 
     TypeSpec.Builder event = TypeSpec.classBuilder(className)
         .addModifiers(Modifier.PUBLIC, Modifier.FINAL)

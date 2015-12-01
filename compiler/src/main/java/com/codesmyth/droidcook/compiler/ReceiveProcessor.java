@@ -161,7 +161,7 @@ public class ReceiveProcessor extends AbstractProcessor {
       Element param = mTypeUtils.asElement(params.get(0).asType());
       code.add("case $S:\n", param.toString());
       code.indent();
-      code.addStatement("x.$L(new $T(intent.getExtras()))", method.getSimpleName().toString(), ClassName.get(mElementUtils.getPackageOf(param).toString(), "Event_" + param.getSimpleName().toString()));
+      code.addStatement("x.$L(new $T(intent.getExtras()))", method.getSimpleName().toString(), ClassName.get(mElementUtils.getPackageOf(param).toString(), "Event" + param.getSimpleName().toString()));
       code.addStatement("break");
       code.unindent();
     }

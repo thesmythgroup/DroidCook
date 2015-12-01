@@ -37,7 +37,7 @@ import java.util.Map;
  *
  * @see com.codesmyth.droidcook.common.widget.FragmentPagerCursorAdapter
  * @see com.codesmyth.droidcook.common.widget.PagerCursorAdapter
- * @see com.codesmyth.droidcook.common.widget.RecyclerCursorAdapter
+ * @see RecyclerCursorAdapterCompat
  */
 @SuppressWarnings("unused")
 public class AffixCursor implements Serializable {

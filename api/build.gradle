@@ -3,7 +3,7 @@ apply plugin: 'maven-publish'
 apply plugin: 'com.jfrog.bintray'
 
 sourceCompatibility = 1.7
-version = '0.3'
+version = '0.3.3'
 
 repositories {
     mavenCentral()
@@ -18,7 +18,7 @@ publishing {
         api(MavenPublication) {
             groupId 'com.codesmyth.droidcook'
             artifactId 'api'
-            version '0.3'
+            version '0.3.3'
             from components.java
         }
     }

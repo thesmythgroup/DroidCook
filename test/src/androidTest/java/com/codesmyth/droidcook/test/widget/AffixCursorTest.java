@@ -8,7 +8,7 @@ import android.test.AndroidTestCase;
 import android.test.mock.MockCursor;
 import android.view.ViewGroup;
 import com.codesmyth.droidcook.common.widget.AffixCursor.GroupingAffix;
-import com.codesmyth.droidcook.common.widget.RecyclerCursorAdapter;
+import com.codesmyth.droidcook.common.widget.RecyclerCursorAdapterCompat;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -228,7 +228,7 @@ public class AffixCursorTest extends AndroidTestCase {
     assertEquals("iter", cursorLen - 1, cursorPos);
   }
 
-  public static class MockCursorAdapter extends RecyclerCursorAdapter {
+  public static class MockCursorAdapter extends RecyclerCursorAdapterCompat {
 
     private int     mMockCount;
     private boolean mWithData;

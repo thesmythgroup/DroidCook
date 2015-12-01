@@ -1,16 +1,14 @@
 package com.codesmyth.droidcook.common.widget;
 
-import android.annotation.TargetApi;
-import android.app.LoaderManager;
 import android.content.Context;
-import android.content.Loader;
 import android.database.Cursor;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.Loader;
 import android.support.v7.widget.RecyclerView;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-@TargetApi(11)
-public abstract class RecyclerCursorAdapter<A extends RecyclerView.Adapter>
+public abstract class RecyclerCursorAdapterCompat<A extends RecyclerView.Adapter>
     extends RecyclerView.Adapter<ViewBinder<A>>
     implements LoaderManager.LoaderCallbacks<Cursor> {
 
@@ -19,7 +17,7 @@ public abstract class RecyclerCursorAdapter<A extends RecyclerView.Adapter>
   private AffixCursor mCursor;
   private int         mLoaderId;
 
-  public RecyclerCursorAdapter(Context context) {
+  public RecyclerCursorAdapterCompat(Context context) {
     super();
     mCursor = new AffixCursor(context);
     mLoaderId = LoaderId.next();
