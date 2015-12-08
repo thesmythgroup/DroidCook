@@ -9,9 +9,10 @@ import android.support.v7.widget.RecyclerView;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
+@Deprecated
 @TargetApi(11)
 public abstract class RecyclerCursorAdapter<A extends RecyclerView.Adapter>
-    extends RecyclerView.Adapter<ViewBinder<A>>
+    extends RecyclerView.Adapter<RecyclerViewBinder<A>>
     implements LoaderManager.LoaderCallbacks<Cursor> {
 
   private AtomicBoolean mHintRemoveInsert = new AtomicBoolean(false);
@@ -32,7 +33,7 @@ public abstract class RecyclerCursorAdapter<A extends RecyclerView.Adapter>
   }
 
   @Override
-  public void onBindViewHolder(ViewBinder<A> holder, int position) {
+  public void onBindViewHolder(RecyclerViewBinder<A> holder, int position) {
     // TODO(d) isNullOrEmpty before a moveToPositionOrThrow seems counter-intuitive. wrt empty views
     if (!mCursor.isNullOrEmpty() && mCursor.getDomain().test(position) == AffixCursor.Domain.NO_MATCH) {
       mCursor.moveToPositionOrThrow(position);

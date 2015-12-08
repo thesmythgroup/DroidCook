@@ -1,16 +1,94 @@
 package com.codesmyth.droidcook.common.util;
 
+import android.content.Context;
+import android.graphics.PointF;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.LinearSmoothScroller;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
+import android.util.AttributeSet;
+import android.util.DisplayMetrics;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.SoundEffectConstants;
 import android.view.View;
 
 public class RecyclerUtil {
+  public static void asPager(final RecyclerView view, int orientation, boolean reverseLayout) {
+    final PagerLayoutManager lm = new PagerLayoutManager(view.getContext(), orientation, reverseLayout);
+    view.setLayoutManager(lm);
+    view.setScrollingTouchSlop(RecyclerView.TOUCH_SLOP_PAGING);
+    final GestureDetector.SimpleOnGestureListener l = new GestureDetector.SimpleOnGestureListener() {
+      @Override
+      public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+        if (velocityX <= 0) {
+          view.smoothScrollToPosition(lm.findLastVisibleItemPosition());
+        } else if (velocityX > 0) {
+          view.smoothScrollToPosition(lm.findFirstVisibleItemPosition());
+        }
+        return true;
+      }
+    };
+    final GestureDetectorCompat gd = new GestureDetectorCompat(view.getContext(), l);
+    view.addOnItemTouchListener(new RecyclerView.OnItemTouchListener() {
+      @Override
+      public boolean onInterceptTouchEvent(RecyclerView rv, MotionEvent e) {
+        if (!gd.onTouchEvent(e)) {
+          if (e.getAction() == MotionEvent.ACTION_UP) {
+            view.post(new Runnable() {
+              @Override
+              public void run() {
+                view.smoothScrollToPosition(lm.findLastVisibleItemPosition());
+              }
+            });
+          }
+        }
+        return false;
+      }
+
+      @Override
+      public void onTouchEvent(RecyclerView rv, MotionEvent e) {
+      }
+
+      @Override
+      public void onRequestDisallowInterceptTouchEvent(boolean disallowIntercept) {
+      }
+    });
+  }
+
+  public static class PagerLayoutManager extends LinearLayoutManager {
+    public PagerLayoutManager(Context context) {
+      super(context);
+    }
+
+    public PagerLayoutManager(Context context, int orientation, boolean reverseLayout) {
+      super(context, orientation, reverseLayout);
+    }
+
+    public PagerLayoutManager(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
+      super(context, attrs, defStyleAttr, defStyleRes);
+    }
+
+    @Override
+    public void smoothScrollToPosition(RecyclerView recyclerView, RecyclerView.State state, int position) {
+      LinearSmoothScroller linearSmoothScroller =
+          new LinearSmoothScroller(recyclerView.getContext()) {
+            @Override
+            public PointF computeScrollVectorForPosition(int targetPosition) {
+              return PagerLayoutManager.this.computeScrollVectorForPosition(targetPosition);
+            }
+
+            @Override
+            protected float calculateSpeedPerPixel(DisplayMetrics displayMetrics) {
+              return 50.0f / displayMetrics.densityDpi;
+            }
+          };
+      linearSmoothScroller.setTargetPosition(position);
+      startSmoothScroll(linearSmoothScroller);
+    }
+  }
 
   public static void setOnItemClickListener(RecyclerView view, OnItemClickListener listener) {
     view.setSoundEffectsEnabled(true);
@@ -86,8 +164,8 @@ public class RecyclerUtil {
     }
   }
 
-  public static interface OnItemClickListener {
-    public void onItemClick(int pos);
+  public interface OnItemClickListener {
+    void onItemClick(int pos);
   }
 
   public static class ItemTouchListener implements RecyclerView.OnItemTouchListener {

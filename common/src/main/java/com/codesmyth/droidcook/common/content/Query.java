@@ -1,12 +1,15 @@
 package com.codesmyth.droidcook.common.content;
 
+import android.annotation.TargetApi;
 import android.content.Context;
+import android.content.CursorLoader;
 import android.database.Cursor;
 import android.net.Uri;
-import android.support.v4.content.CursorLoader;
+import android.os.Bundle;
 import com.google.common.base.Optional;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public final class Query {
 
@@ -44,6 +47,11 @@ public final class Query {
       return context.getContentResolver().query(mFrom, mSelect, mWhere, mWhereArgs, mOrderBy);
     }
 
+    public android.support.v4.content.CursorLoader cursorLoaderCompat(Context context) {
+      return new android.support.v4.content.CursorLoader(context, mFrom, mSelect, mWhere, mWhereArgs, mOrderBy);
+    }
+
+    @TargetApi(11)
     public CursorLoader cursorLoader(Context context) {
       return new CursorLoader(context, mFrom, mSelect, mWhere, mWhereArgs, mOrderBy);
     }
@@ -162,6 +170,70 @@ public final class Query {
         }
       }
       return result;
+    }
+
+    public Bundle getBundle(Context context) {
+      Bundle result = Bundle.EMPTY;
+      Cursor c = null;
+      try {
+        c = exec(context);
+        if (c != null && c.moveToFirst()) {
+          result = Query.getBundle(c);
+        }
+      } finally {
+        if (c != null) {
+          c.close();
+        }
+      }
+      return result;
+    }
+
+    public List<Bundle> getBundleList(Context context) {
+      ArrayList<Bundle> result = new ArrayList<>();
+      Cursor c = null;
+      try {
+        c = exec(context);
+        if (c != null) {
+          while (c.moveToNext()) {
+            result.add(Query.getBundle(c));
+          }
+        }
+      } finally {
+        if (c != null) {
+          c.close();
+        }
+      }
+      return result;
+    }
+  }
+
+  static Bundle getBundle(Cursor cur) {
+    Bundle row = new Bundle();
+    getBundleInto(row, cur);
+    return row;
+  }
+
+  static void getBundleInto(Bundle out, Cursor cur) {
+    for (int j = 0; j < cur.getColumnCount(); j++) {
+      String name = cur.getColumnName(j);
+      switch (cur.getType(j)) {
+      case Cursor.FIELD_TYPE_BLOB:
+        out.putByteArray(name, cur.getBlob(j));
+        break;
+      case Cursor.FIELD_TYPE_FLOAT:
+        out.putFloat(name, cur.getFloat(j));
+        break;
+      case Cursor.FIELD_TYPE_INTEGER:
+        out.putInt(name, cur.getInt(j));
+        break;
+      case Cursor.FIELD_TYPE_STRING:
+        out.putString(name, cur.getString(j));
+        break;
+      case Cursor.FIELD_TYPE_NULL:
+        break;
+      default:
+        throw new RuntimeException("Unsupported field type: " + cur.getType(j));
+      }
     }
   }
 

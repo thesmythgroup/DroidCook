@@ -7,6 +7,7 @@ import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 
+@Deprecated
 public abstract class FragmentPagerCursorAdapter extends FragmentStatePagerAdapter
     implements LoaderManager.LoaderCallbacks<Cursor> {
 

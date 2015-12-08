@@ -10,6 +10,7 @@ import android.view.ViewGroup;
 
 import java.io.Serializable;
 
+@Deprecated
 public abstract class PagerCursorAdapter extends PagerAdapter
     implements LoaderManager.LoaderCallbacks<Cursor>, Serializable {
 

@@ -62,7 +62,7 @@ publishing {
         common(MavenPublication) {
             groupId 'com.codesmyth.droidcook'
             artifactId 'common'
-            version '0.3.5'
+            version '0.3.15'
             artifact(sourceJar)
             artifact("$buildDir/outputs/aar/common-release.aar")
         }

@@ -1,7 +1,9 @@
 package com.codesmyth.droidcook.common.widget;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.database.Cursor;
+import android.os.Bundle;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -80,6 +82,12 @@ public class AffixCursor implements Serializable {
     return false;
   }
 
+  public void close() {
+    if (mCursor != null) {
+      mCursor.close();
+    }
+  }
+
   public Context getContext() {
     return mContext;
   }
@@ -132,6 +140,7 @@ public class AffixCursor implements Serializable {
   /**
    * The behaviour of this method is largely undefined, use with caution. Given that position arg
    * passes domain test, attempt to find and move to next valid cursor position.
+   *
    * @param position
    */
   public void moveToNextValidPositionFrom(int position) {
@@ -145,6 +154,38 @@ public class AffixCursor implements Serializable {
       }
     }
     throw new IllegalStateException("No next valid position was found from position " + position);
+  }
+
+  @TargetApi(11)
+  public Bundle getBundle() {
+    Bundle row = new Bundle();
+    getBundleInto(row);
+    return row;
+  }
+
+  @TargetApi(11)
+  public void getBundleInto(Bundle out) {
+    for (int j = 0; j < mCursor.getColumnCount(); j++) {
+      String name = mCursor.getColumnName(j);
+      switch (mCursor.getType(j)) {
+      case Cursor.FIELD_TYPE_BLOB:
+        out.putByteArray(name, getBlob(j));
+        break;
+      case Cursor.FIELD_TYPE_FLOAT:
+        out.putFloat(name, getFloat(j));
+        break;
+      case Cursor.FIELD_TYPE_INTEGER:
+        out.putInt(name, getInt(j));
+        break;
+      case Cursor.FIELD_TYPE_STRING:
+        out.putString(name, getString(j));
+        break;
+      case Cursor.FIELD_TYPE_NULL:
+        break;
+      default:
+        throw new RuntimeException("Unsupported field type: " + mCursor.getType(j));
+      }
+    }
   }
 
   public int getPosition() {
