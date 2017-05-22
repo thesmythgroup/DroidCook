@@ -3,39 +3,61 @@ package com.codesmyth.droidcook.compiler;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Parcelable;
 import com.codesmyth.droidcook.api.Event;
+import com.codesmyth.droidcook.api.Warning;
 import com.google.auto.service.AutoService;
-import com.squareup.javapoet.*;
-
-import javax.annotation.processing.*;
-import javax.lang.model.SourceVersion;
-import javax.lang.model.element.*;
-import javax.lang.model.type.ArrayType;
-import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.Elements;
-import javax.lang.model.util.Types;
-import javax.tools.Diagnostic;
+import com.squareup.javapoet.AnnotationSpec;
+import com.squareup.javapoet.ArrayTypeName;
+import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.FieldSpec;
+import com.squareup.javapoet.JavaFile;
+import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.TypeName;
+import com.squareup.javapoet.TypeSpec;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.HashSet;
 import java.util.Set;
+import javax.annotation.processing.AbstractProcessor;
+import javax.annotation.processing.Filer;
+import javax.annotation.processing.Messager;
+import javax.annotation.processing.ProcessingEnvironment;
+import javax.annotation.processing.Processor;
+import javax.annotation.processing.RoundEnvironment;
+import javax.lang.model.SourceVersion;
+import javax.lang.model.element.Element;
+import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Modifier;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.ArrayType;
+import javax.lang.model.type.TypeKind;
+import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.Elements;
+import javax.lang.model.util.Types;
+import javax.tools.Diagnostic;
 
 @AutoService(Processor.class)
 public class EventProcessor extends AbstractProcessor {
 
-  private Types    mTypeUtils;
-  private Elements mElementUtils;
-  private Filer    mFiler;
-  private Messager mMessager;
+  private Types typeUtils;
+  private Elements elementUtils;
+  private Filer filer;
+  private Messager msg;
+
+  private TypeMirror parcelableType;
+  // TODO serializable, sparsearray, non-primitive list types; specify preferred/weighted order.
 
   @Override
   public synchronized void init(ProcessingEnvironment processingEnv) {
     super.init(processingEnv);
-    mTypeUtils = processingEnv.getTypeUtils();
-    mElementUtils = processingEnv.getElementUtils();
-    mFiler = processingEnv.getFiler();
-    mMessager = processingEnv.getMessager();
+    typeUtils = processingEnv.getTypeUtils();
+    elementUtils = processingEnv.getElementUtils();
+    filer = processingEnv.getFiler();
+    msg = processingEnv.getMessager();
+
+    parcelableType = elementUtils.getTypeElement("android.os.Parcelable").asType();
   }
 
   @Override
@@ -54,20 +76,22 @@ public class EventProcessor extends AbstractProcessor {
   public boolean process(Set<? extends TypeElement> set, RoundEnvironment roundEnvironment) {
     try {
       for (Element el : roundEnvironment.getElementsAnnotatedWith(Event.class)) {
-        if (el.getKind() != ElementKind.INTERFACE && !el.getModifiers().contains(Modifier.ABSTRACT)) {
-          mMessager.printMessage(Diagnostic.Kind.ERROR, "Only interfaces or abstract classes accepted for @Event", el);
+        if (!el.getKind().isInterface() && !el.getModifiers().contains(Modifier.ABSTRACT)) {
+          msg.printMessage(Diagnostic.Kind.WARNING,
+              "Only interfaces or abstract classes accepted for @Event", el);
         }
         try {
-          JavaFile.builder(mElementUtils.getPackageOf(el).toString(), makeType((TypeElement) el))
+          JavaFile.builder(elementUtils.getPackageOf(el).toString(), makeType((TypeElement) el))
               .build()
-              .writeTo(mFiler);
+              .writeTo(filer);
         } catch (IOException e) {
           e.printStackTrace();
+          msg.printMessage(Diagnostic.Kind.WARNING, e.getMessage());
         }
       }
       return true;
     } catch (ProcessorException | ClassNotFoundException e) {
-      mMessager.printMessage(Diagnostic.Kind.ERROR, e.getMessage());
+      msg.printMessage(Diagnostic.Kind.ERROR, e.getMessage());
       return true;
     }
   }
@@ -107,7 +131,7 @@ public class EventProcessor extends AbstractProcessor {
     }
 
     for (Element ch : el.getEnclosedElements()) {
-      if (el.getKind() != ElementKind.INTERFACE && !ch.getModifiers().contains(Modifier.ABSTRACT)) {
+      if (!(el.getKind().isInterface() || ch.getModifiers().contains(Modifier.ABSTRACT))) {
         continue;
       }
 
@@ -115,22 +139,31 @@ public class EventProcessor extends AbstractProcessor {
       ExecutableElement ex = (ExecutableElement) ch;
 
       // TODO(d) handle unboxing in future
-      TypeName paramType = mirrorToType(ex.getReturnType());
-      TypeName boxedType = mirrorToType(ex.getReturnType());
+      TypeName paramType = mirrorToName(ex.getReturnType());
+      TypeMirror boxedType = ex.getReturnType();
 
-      MethodSpec get = MethodSpec.methodBuilder(key)
+      MethodSpec.Builder getter = MethodSpec.methodBuilder(key)
           .addModifiers(Modifier.PUBLIC)
-          .addStatement("return mExtras.$L($S)", findGetMethod(boxedType), key)
-          .returns(paramType)
-          .build();
+          .returns(paramType);
 
-      event.addMethod(get);
+      try {
+        getter = getter.addStatement("return mExtras.$L($S)", findGetter(boxedType), key);
+      } catch (ProcessorException e) {
+        msg.printMessage(Diagnostic.Kind.WARNING, e.getMessage());
+        AnnotationSpec ann = AnnotationSpec.builder(Warning.class)
+            .addMember("value", "$S", e.getMessage()).build();
+        getter = getter.addAnnotation(ann)
+            .addStatement("throw new $T($S)", RuntimeException.class, e.getMessage());
+      } finally {
+        event.addMethod(getter.build());
+      }
     }
 
     return event.build();
   }
 
-  public TypeSpec makeTypeBuilder(TypeElement el) throws ProcessorException, ClassNotFoundException {
+  public TypeSpec makeTypeBuilder(TypeElement el)
+      throws ProcessorException, ClassNotFoundException {
     FieldSpec extras = FieldSpec.builder(Bundle.class, "mExtras")
         .addModifiers(Modifier.PRIVATE, Modifier.FINAL)
         .initializer("new $T()", Bundle.class)
@@ -145,14 +178,16 @@ public class EventProcessor extends AbstractProcessor {
             .addModifiers(Modifier.PUBLIC)
             .returns(boolean.class)
             .addParameter(Context.class, "context")
-            .addStatement("return $T.getInstance(context).sendBroadcast(new $T(ACTION).putExtras(mExtras))",
+            .addStatement(
+                "return $T.getInstance(context).sendBroadcast(new $T(ACTION).putExtras(mExtras))",
                 ClassName.get("android.support.v4.content", "LocalBroadcastManager"), Intent.class)
             .build())
         .addMethod(MethodSpec.methodBuilder("broadcastSync")
             .addModifiers(Modifier.PUBLIC)
             .returns(void.class)
             .addParameter(Context.class, "context")
-            .addStatement("$T.getInstance(context).sendBroadcastSync(new $T(ACTION).putExtras(mExtras))",
+            .addStatement(
+                "$T.getInstance(context).sendBroadcastSync(new $T(ACTION).putExtras(mExtras))",
                 ClassName.get("android.support.v4.content", "LocalBroadcastManager"), Intent.class)
             .build());
 
@@ -161,7 +196,7 @@ public class EventProcessor extends AbstractProcessor {
         continue;
       }
 
-      if (el.getKind() != ElementKind.INTERFACE && !ch.getModifiers().contains(Modifier.ABSTRACT)) {
+      if (!(el.getKind().isInterface() || ch.getModifiers().contains(Modifier.ABSTRACT))) {
         continue;
       }
 
@@ -169,67 +204,99 @@ public class EventProcessor extends AbstractProcessor {
       ExecutableElement ex = (ExecutableElement) ch;
 
       // TODO(d) handle unboxing in future
-      TypeName paramType = mirrorToType(ex.getReturnType());
-      TypeName boxedType = mirrorToType(ex.getReturnType());
+      TypeName paramType = mirrorToName(ex.getReturnType());
+      TypeMirror boxedType = ex.getReturnType();
 
-      MethodSpec set = MethodSpec.methodBuilder(key)
+      MethodSpec.Builder setter = MethodSpec.methodBuilder(key)
           .addModifiers(Modifier.PUBLIC)
           .returns(ClassName.bestGuess(className))
-          .addParameter(paramType, "x")
-          .addStatement("mExtras.$L($S, x)", findPutMethod(boxedType), key)
-          .addStatement("return this")
-          .build();
+          .addParameter(paramType, "x");
 
-      event.addMethod(set);
+      try {
+        setter = setter.addStatement("mExtras.$L($S, x)", findSetter(boxedType), key)
+            .addStatement("return this");
+      } catch (ProcessorException e) {
+        msg.printMessage(Diagnostic.Kind.WARNING, e.getMessage());
+        AnnotationSpec ann = AnnotationSpec.builder(Warning.class)
+            .addMember("value", "$S", e.getMessage()).build();
+        setter = setter.addAnnotation(ann)
+            .addStatement("throw new $T($S)", RuntimeException.class, e.getMessage());
+      } finally {
+        event.addMethod(setter.build());
+      }
     }
 
     return event.build();
   }
 
-  TypeName mirrorToType(TypeMirror type) throws ProcessorException {
-    TypeName result;
-    boolean isArray = type instanceof ArrayType;
-
-    if (isArray) {
-      result = ArrayTypeName.get((ArrayType) type);
-    } else if (type.getKind().isPrimitive()) {
-      result = TypeName.get(type);
-    } else {
-      result = TypeName.get(type);
+  TypeName mirrorToName(TypeMirror t) throws ProcessorException {
+    if (t.getKind() == TypeKind.ARRAY) {
+      return ArrayTypeName.get((ArrayType) t);
     }
-    return result;
+    return TypeName.get(t);
   }
 
-  private String findGetMethod(TypeName typeName) throws ClassNotFoundException, ProcessorException {
+  private String findGetter(TypeMirror t) throws ClassNotFoundException, ProcessorException {
+    TypeName name = mirrorToName(t);
+
+    // see comment in findSetter
+    String assignable = "";
+
     for (Method m : Bundle.class.getMethods()) {
       if (!m.getName().startsWith("get")) {
         continue;
       }
       Type[] params = m.getGenericParameterTypes();
-      if (params.length != 0 && params[0].equals(String.class)) {
-        TypeName genReturnType = TypeName.get(m.getGenericReturnType());
-        TypeName returnType = TypeName.get(m.getReturnType());
-        if (genReturnType.equals(typeName) || returnType.equals(typeName)) {
+      if (params.length == 1 && params[0].equals(String.class)) {
+
+        Type genericReturnType = m.getGenericReturnType();
+        TypeName genericReturnName = TypeName.get(genericReturnType);
+
+        Type returnType = m.getReturnType();
+        TypeName returnName = TypeName.get(returnType);
+
+        if (name.equals(genericReturnName) || name.equals(returnName)) {
           return m.getName();
-        }
+        } else if ((returnType == Parcelable.class || genericReturnType == Parcelable.class)
+            && typeUtils.isAssignable(t, parcelableType)) {
+          assignable = m.getName();
+        } // TODO other uncommon types
       }
     }
-    throw new ProcessorException("Failed to find get method for " + typeName);
+    if ("".equals(assignable)) {
+      throw new ProcessorException("Failed to find getter for " + name);
+    }
+    return assignable;
   }
 
-  private String findPutMethod(TypeName typeName) throws ClassNotFoundException, ProcessorException {
+  private String findSetter(TypeMirror t) throws ClassNotFoundException, ProcessorException {
+    TypeName name = mirrorToName(t);
+
+    // Exact string matches are preferred to avoid generating code that accidentally
+    // type casts, but also need to facilitate Parcelable and Serializable,
+    // which will be checked explicitly before return; but here, lies are last hope.
+    String assignable = "";
+
     for (Method m : Bundle.class.getMethods()) {
       if (!m.getName().startsWith("put")) {
         continue;
       }
       Type[] params = m.getGenericParameterTypes();
       if (params.length == 2 && params[0].equals(String.class)) {
-        TypeName param = TypeName.get(params[1]);
-        if (param.equals(typeName)) {
+        Type param = params[1];
+        if (TypeName.get(param).equals(name)) {
           return m.getName();
-        }
+        } else if (param == Parcelable.class && typeUtils.isAssignable(t, parcelableType)) {
+          assignable = m.getName();
+        } // TODO other uncommon types
       }
     }
-    throw new ProcessorException("Failed to find put method for " + typeName);
+
+    if ("".equals(assignable)) {
+      throw new ProcessorException("Failed to find setter for " + name);
+    }
+    return assignable;
   }
 }
+
+

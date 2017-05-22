@@ -8,17 +8,16 @@ import android.content.IntentFilter;
 import android.database.ContentObserver;
 import android.net.Uri;
 import android.os.Handler;
-import com.codesmyth.droidcook.common.util.Logger;
-
+import android.util.Log;
 import java.util.HashMap;
 import java.util.Map;
 
 public abstract class ManagedEvent<A, B, C> {
 
-  private Logger mLog = new Logger(this);
+  private static final String TAG = "ManagedEvent";
 
   private HashMap<A, Boolean> evs = new HashMap<>();
-  private Activity            act = null;
+  private Activity act = null;
 
   protected abstract void registerEvent(Activity a, A e);
 
@@ -61,14 +60,14 @@ public abstract class ManagedEvent<A, B, C> {
   public final void unregister(A... events) {
     for (A e : events) {
       if (!evs.containsKey(e)) {
-        mLog.d("Attempting to unregister event not managed.");
+        Log.d(TAG, "Attempting to unregister event not managed.");
       }
       if (act != null) {
         try {
           unregisterEvent(act, e);
         } catch (IllegalArgumentException t) {
           t.printStackTrace();
-          mLog.e("unregister event failed", e);
+          Log.e(TAG, "unregister event failed: " + String.valueOf(e));
         }
       }
       evs.remove(e);
@@ -91,7 +90,7 @@ public abstract class ManagedEvent<A, B, C> {
       try {
         unregisterEvent(act, entry.getKey());
       } catch (IllegalArgumentException t) {
-        mLog.e("unregister failed", t);
+        Log.e(TAG, "unregister failed", t);
       }
     }
   }
@@ -107,16 +106,28 @@ public abstract class ManagedEvent<A, B, C> {
       try {
         registerEvent(act, entry.getKey());
       } catch (IllegalArgumentException t) {
-        mLog.e("register failed", t);
+        Log.e(TAG, "register failed", t);
       }
     }
   }
 
+  public interface ReceiverFunc {
+
+    void apply(PackedReceiver pr, Intent intent);
+  }
+
+  public interface ObserverFunc {
+
+    void apply(PackedObserver po, Boolean b);
+  }
+
   public static abstract class PackedReceiver extends BroadcastReceiver {
+
     public abstract IntentFilter filter();
   }
 
   public static abstract class PackedObserver extends ContentObserver {
+
     public PackedObserver() {
       super(new Handler());
     }
@@ -124,15 +135,9 @@ public abstract class ManagedEvent<A, B, C> {
     public abstract Uri uri();
   }
 
-  public static interface ReceiverFunc {
-    public void apply(PackedReceiver pr, Intent intent);
-  }
+  public static abstract class ReceiverEvent extends
+      ManagedEvent<PackedReceiver, ReceiverFunc, String> {
 
-  public static interface ObserverFunc {
-    public void apply(PackedObserver po, Boolean b);
-  }
-
-  public static abstract class ReceiverEvent extends ManagedEvent<PackedReceiver, ReceiverFunc, String> {
     @Override
     protected PackedReceiver makeEvent(final String s, final ReceiverFunc receiverFunc) {
       return new PackedReceiver() {
@@ -159,7 +164,9 @@ public abstract class ManagedEvent<A, B, C> {
     }
   }
 
-  public static abstract class ObserverEvent extends ManagedEvent<PackedObserver, ObserverFunc, Uri> {
+  public static abstract class ObserverEvent extends
+      ManagedEvent<PackedObserver, ObserverFunc, Uri> {
+
     @Override
     protected PackedObserver makeEvent(final Uri uri, final ObserverFunc observerFunc) {
       return new PackedObserver() {

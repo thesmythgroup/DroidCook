@@ -3,8 +3,8 @@ package com.codesmyth.droidcook.common.database;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import com.google.common.io.CharStreams;
 
+import com.codesmyth.droidcook.common.util.Strings;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -28,7 +28,7 @@ public abstract class Database extends SQLiteOpenHelper {
   protected String[] schema() throws IOException {
     InputStream is = mContext.getResources().openRawResource(mRawId);
     InputStreamReader isr = new InputStreamReader(is);
-    String schema = CharStreams.toString(isr);
+    String schema = Strings.read(isr);
     isr.close();
     is.close();
     return schema.split("\n");

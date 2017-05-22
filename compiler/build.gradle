@@ -1,45 +1,8 @@
-apply plugin: 'java'
-apply plugin: 'maven-publish'
-apply plugin: 'com.jfrog.bintray'
-
-sourceCompatibility = 1.7
-version = '0.3.5'
-
-repositories {
-    mavenCentral()
-}
+apply plugin: "java"
 
 dependencies {
-    compile project(':api')
-    compile 'com.google.android:android:4.1.1.4'
-    compile 'com.google.auto.service:auto-service:1.0-rc2'
-    compile 'com.squareup:javapoet:1.0.0'
-    testCompile group: 'junit', name: 'junit', version: '4.11'
-}
-
-publishing {
-    publications {
-        compiler(MavenPublication) {
-            groupId 'com.codesmyth.droidcook'
-            artifactId 'compiler'
-            from components.java
-        }
-    }
-    repositories {
-        maven {
-            url "$buildDir/repo"
-        }
-    }
-}
-
-bintray {
-    user = System.getenv('BINTRAY_USER')
-    key = System.getenv('BINTRAY_KEY')
-    publications = ['compiler']
-    pkg {
-        repo = 'maven'
-        name = 'droidcook'
-        licenses = ['BSD']
-        vcsUrl = 'https://github.com/dskinner/DroidCook.git'
-    }
+    compile "com.google.android:android:4.1.1.4"
+    compile "com.google.auto.service:auto-service:1.0-rc3"
+    compile "com.squareup:javapoet:1.0.0"
+    compile project(":api")
 }

@@ -1,55 +1,10 @@
-buildscript {
-    repositories {
-        jcenter()
-    }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:1.1.1'
-    }
-}
-
-apply plugin: 'com.android.library'
-apply plugin: 'maven-publish'
-apply plugin: 'com.jfrog.bintray'
-
-repositories {
-    jcenter()
-}
-
-android {
-    compileSdkVersion 23
-    buildToolsVersion "23.0.1"
-
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_7
-        targetCompatibility JavaVersion.VERSION_1_7
-    }
-
-    defaultConfig {
-        minSdkVersion 9
-        targetSdkVersion 23
-        versionCode 1
-        versionName "1.0"
-    }
-
-    buildTypes {
-        release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-        }
-    }
-
-    lintOptions {
-        abortOnError false
-    }
-}
+apply plugin: "com.android.library"
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile 'javax.inject:javax.inject:1'
-    compile 'com.android.support:appcompat-v7:23.0.1'
-    compile 'com.android.support:support-v4:23.0.1'
-    compile 'com.android.support:recyclerview-v7:23.0.1'
-    compile 'com.google.guava:guava:18.0'
+    compile "javax.inject:javax.inject:1"
+    compile "com.android.support:appcompat-v7:$rootProject.ext.supportLib"
+    compile "com.android.support:support-v4:$rootProject.ext.supportLib"
+    compile "com.android.support:recyclerview-v7:$rootProject.ext.supportLib"
 }
 
 task sourceJar(type: Jar) {
@@ -60,9 +15,8 @@ task sourceJar(type: Jar) {
 publishing {
     publications {
         common(MavenPublication) {
-            groupId 'com.codesmyth.droidcook'
-            artifactId 'common'
-            version '0.3.15'
+            groupId project.group
+            artifactId project.name
             artifact(sourceJar)
             artifact("$buildDir/outputs/aar/common-release.aar")
         }
@@ -71,17 +25,5 @@ publishing {
         maven {
             url "$buildDir/repo"
         }
-    }
-}
-
-bintray {
-    user = System.getenv('BINTRAY_USER')
-    key = System.getenv('BINTRAY_KEY')
-    publications = ['common']
-    pkg {
-        repo = 'maven'
-        name = 'droidcook'
-        licenses = ['BSD']
-        vcsUrl = 'https://github.com/dskinner/DroidCook.git'
     }
 }
