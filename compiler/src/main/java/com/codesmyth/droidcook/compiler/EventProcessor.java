@@ -1,5 +1,6 @@
 package com.codesmyth.droidcook.compiler;
 
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -174,21 +175,35 @@ public class EventProcessor extends AbstractProcessor {
     TypeSpec.Builder event = TypeSpec.classBuilder(className)
         .addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
         .addField(extras)
+        .addMethod(MethodSpec.methodBuilder("intent")
+            .addModifiers(Modifier.PUBLIC)
+            .returns(Intent.class)
+            .addStatement("return new $T(ACTION).putExtras(mExtras)", Intent.class)
+            .build())
+        .addMethod(MethodSpec.methodBuilder("pendingIntent")
+            .addModifiers(Modifier.PUBLIC)
+            .returns(PendingIntent.class)
+            .addParameter(Context.class, "context")
+            .addParameter(int.class, "requestCode")
+            .addParameter(int.class, "flags")
+            .addStatement("return $T.getBroadcast(context, requestCode, intent(), flags)",
+                PendingIntent.class)
+            .build())
         .addMethod(MethodSpec.methodBuilder("broadcast")
             .addModifiers(Modifier.PUBLIC)
             .returns(boolean.class)
             .addParameter(Context.class, "context")
             .addStatement(
-                "return $T.getInstance(context).sendBroadcast(new $T(ACTION).putExtras(mExtras))",
-                ClassName.get("android.support.v4.content", "LocalBroadcastManager"), Intent.class)
+                "return $T.getInstance(context).sendBroadcast(intent())",
+                ClassName.get("android.support.v4.content", "LocalBroadcastManager"))
             .build())
         .addMethod(MethodSpec.methodBuilder("broadcastSync")
             .addModifiers(Modifier.PUBLIC)
             .returns(void.class)
             .addParameter(Context.class, "context")
             .addStatement(
-                "$T.getInstance(context).sendBroadcastSync(new $T(ACTION).putExtras(mExtras))",
-                ClassName.get("android.support.v4.content", "LocalBroadcastManager"), Intent.class)
+                "$T.getInstance(context).sendBroadcastSync(intent())",
+                ClassName.get("android.support.v4.content", "LocalBroadcastManager"))
             .build());
 
     for (Element ch : el.getEnclosedElements()) {
