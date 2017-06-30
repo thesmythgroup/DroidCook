@@ -4,13 +4,13 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import com.codesmyth.droidcook.api.Receive;
+import android.os.Handler;
+import com.codesmyth.droidcook.api.Action;
 import com.google.auto.service.AutoService;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
-import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeSpec;
 import java.io.IOException;
 import java.util.HashMap;
@@ -25,6 +25,7 @@ import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.PackageElement;
@@ -37,13 +38,11 @@ import javax.tools.Diagnostic;
 import javax.tools.Diagnostic.Kind;
 
 @AutoService(Processor.class)
-public class ReceiveProcessor extends AbstractProcessor {
+public class ActionProcessor extends AbstractProcessor {
   private Types typeUtils;
   private Elements elementUtils;
   private Filer filer;
-  private Messager msg;
-
-  private TypeSpec.Builder receiverFactory;
+  private Messager log;
 
   private HashMap<TypeElement, Set<ExecutableElement>> execMap;
 
@@ -53,16 +52,15 @@ public class ReceiveProcessor extends AbstractProcessor {
     typeUtils = processingEnv.getTypeUtils();
     elementUtils = processingEnv.getElementUtils();
     filer = processingEnv.getFiler();
-    msg = processingEnv.getMessager();
+    log = processingEnv.getMessager();
 
-    receiverFactory = TypeSpec.classBuilder("ReceiverFactory").addModifiers(Modifier.PUBLIC);
     execMap = new HashMap<>();
   }
 
   @Override
   public Set<String> getSupportedAnnotationTypes() {
     Set<String> set = new HashSet<>();
-    set.add(Receive.class.getCanonicalName());
+    set.add(Action.class.getCanonicalName());
     return set;
   }
 
@@ -73,12 +71,18 @@ public class ReceiveProcessor extends AbstractProcessor {
 
   @Override
   public boolean process(Set<? extends TypeElement> set, RoundEnvironment roundEnvironment) {
-    Set<? extends Element> els = roundEnvironment.getElementsAnnotatedWith(Receive.class);
+    Set<? extends Element> els = roundEnvironment.getElementsAnnotatedWith(Action.class);
     if (els.size() == 0) {
       return true;
     }
 
     for (Element el : els) {
+      if (el.getKind() != ElementKind.METHOD) {
+        // TODO
+        printMessage(Diagnostic.Kind.WARNING, "Only methods are currently supported by @Action", el);
+        continue;
+      }
+
       TypeElement parent = (TypeElement) el.getEnclosingElement();
 
       Set<ExecutableElement> methods;
@@ -92,57 +96,53 @@ public class ReceiveProcessor extends AbstractProcessor {
       methods.add((ExecutableElement) el);
     }
 
+    try {
+      JavaFile.builder("com.codesmyth.droidcook", packedReceiverSpec()).build().writeTo(filer);
+    } catch (IOException e) {
+      e.printStackTrace();
+      printMessage(Diagnostic.Kind.WARNING, e.getMessage());
+    }
+
     for (TypeElement el : execMap.keySet()) {
       try {
-        receiverFactory.addMethod(addFactoryMethod(el));
-      } catch (ProcessorException e) {
+        String pkg = elementUtils.getPackageOf(el).toString();
+        TypeSpec spec = receiverSpec(el);
+        JavaFile.builder(pkg, spec).build().writeTo(filer);
+      } catch (ProcessorException|IOException e) {
         e.printStackTrace();
-        msg.printMessage(Diagnostic.Kind.WARNING, e.getMessage());
+        printMessage(Diagnostic.Kind.WARNING, e.getMessage());
       }
     }
 
-    try {
-      JavaFile.builder("com.codesmyth.droidcook", makePackedReceiver())
-          .build()
-          .writeTo(filer);
-    } catch (IOException e) {
-      e.printStackTrace();
-      msg.printMessage(Diagnostic.Kind.WARNING, e.getMessage());
-    }
-    try {
-      JavaFile.builder("com.codesmyth.droidcook", receiverFactory.build())
-          .build()
-          .writeTo(filer);
-    } catch (IOException e) {
-      e.printStackTrace();
-      msg.printMessage(Diagnostic.Kind.WARNING, e.getMessage());
-    }
     return true;
   }
 
-  private MethodSpec addFactoryMethod(TypeElement el) throws ProcessorException {
-    return MethodSpec.methodBuilder("makeFor")
-        .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
-        .returns(ClassName.get("com.codesmyth.droidcook", "PackedReceiver"))
-        .addParameter(ParameterSpec.builder(ClassName.bestGuess(el.toString()), "x")
-            .addModifiers(Modifier.FINAL)
+  private TypeSpec receiverSpec(TypeElement el) throws ProcessorException {
+    ClassName parentName = ClassName.bestGuess(el.toString());
+    ClassName className = ClassName.bestGuess(el.getSimpleName() + "Receiver");
+
+    return TypeSpec.classBuilder(className.simpleName())
+        .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
+        .superclass(ClassName.get("com.codesmyth.droidcook", "PackedReceiver"))
+        .addField(parentName, "x", Modifier.PRIVATE, Modifier.FINAL)
+        .addMethod(MethodSpec.constructorBuilder()
+            .addModifiers(Modifier.PUBLIC)
+            .addParameter(parentName, "x")
+            .addStatement("this.x = x")
             .build())
-        .addStatement("return $L", TypeSpec.anonymousClassBuilder("")
-            .superclass(ClassName.get("com.codesmyth.droidcook", "PackedReceiver"))
-            .addMethod(MethodSpec.methodBuilder("onReceive")
-                .addModifiers(Modifier.PUBLIC)
-                .addAnnotation(Override.class)
-                .returns(void.class)
-                .addParameter(Context.class, "context")
-                .addParameter(Intent.class, "intent")
-                .addCode(switchFor(el))
-                .build())
-            .addMethod(MethodSpec.methodBuilder("filter")
-                .addModifiers(Modifier.PUBLIC)
-                .addAnnotation(Override.class)
-                .returns(IntentFilter.class)
-                .addCode(filterFor(el))
-                .build())
+        .addMethod(MethodSpec.methodBuilder("onReceive")
+            .addModifiers(Modifier.PUBLIC)
+            .addAnnotation(Override.class)
+            .returns(void.class)
+            .addParameter(Context.class, "context")
+            .addParameter(Intent.class, "intent")
+            .addCode(switchFor(el))
+            .build())
+        .addMethod(MethodSpec.methodBuilder("filter")
+            .addModifiers(Modifier.PUBLIC)
+            .addAnnotation(Override.class)
+            .returns(IntentFilter.class)
+            .addCode(filterFor(el))
             .build())
         .build();
   }
@@ -150,11 +150,11 @@ public class ReceiveProcessor extends AbstractProcessor {
   private CodeBlock switchFor(TypeElement el) throws ProcessorException {
     CodeBlock.Builder code = CodeBlock.builder();
     code.beginControlFlow("switch (intent.getAction())");
-    for (ExecutableElement method : execMap.get(el)) {
 
+    for (ExecutableElement method : execMap.get(el)) {
       List<? extends VariableElement> params = method.getParameters();
       if (params.size() != 1) {
-        msg.printMessage(Kind.WARNING, "@Receive method should only have 1 param", method);
+        printMessage(Kind.WARNING, "@Action method should only have 1 param", method);
         continue;
       }
 
@@ -162,22 +162,20 @@ public class ReceiveProcessor extends AbstractProcessor {
       Element paramElem = typeUtils.asElement(param);
       String paramName = paramElem.getSimpleName().toString();
       PackageElement pkg = elementUtils.getPackageOf(paramElem);
+
       String pkgName = pkg.getQualifiedName().toString();
       if ("".equals(pkgName)) {
-        msg.printMessage(Kind.WARNING, "Unable to resolve package name for param: " + paramName,
-            paramElem);
+        printMessage(Kind.WARNING, "Unable to resolve package name for param: " + paramName, paramElem);
         continue;
       }
 
       code.add("case $S:\n", param.toString());
       code.indent();
-      code.addStatement("x.$L(new $T(intent.getExtras()))",
-          method.getSimpleName(),
-          ClassName.get(pkgName, "Event" + paramName)
-      );
+      code.addStatement("x.$L(new $T(intent.getExtras()))", method.getSimpleName(), ClassName.get(pkgName, paramName + "Bundler"));
       code.addStatement("break");
       code.unindent();
     }
+
     code.endControlFlow();
     return code.build();
   }
@@ -189,8 +187,8 @@ public class ReceiveProcessor extends AbstractProcessor {
     for (ExecutableElement method : execMap.get(el)) {
       List<? extends VariableElement> params = method.getParameters();
       if (params.size() != 1) {
-        msg.printMessage(Diagnostic.Kind.ERROR, "@Receive method should only have 1 param", method);
-        throw new ProcessorException("@Receive method should only have 1 param");
+        printMessage(Diagnostic.Kind.ERROR, "@Action method should only have 1 param", method);
+        throw new ProcessorException("@Action method should only have 1 param");
       }
       code.addStatement("filter.addAction($S)", params.get(0).asType().toString());
     }
@@ -199,7 +197,7 @@ public class ReceiveProcessor extends AbstractProcessor {
     return code.build();
   }
 
-  private TypeSpec makePackedReceiver() {
+  private TypeSpec packedReceiverSpec() {
     return TypeSpec.classBuilder("PackedReceiver")
         .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
         .superclass(BroadcastReceiver.class)
@@ -207,20 +205,48 @@ public class ReceiveProcessor extends AbstractProcessor {
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
             .returns(IntentFilter.class)
             .build())
-        .addMethod(MethodSpec.methodBuilder("register")
+        .addMethod(MethodSpec.methodBuilder("registerLocal")
             .addModifiers(Modifier.PUBLIC)
             .returns(void.class)
             .addParameter(Context.class, "context")
             .addStatement("$T.getInstance(context).registerReceiver(this, filter())",
                 ClassName.get("android.support.v4.content", "LocalBroadcastManager"))
             .build())
-        .addMethod(MethodSpec.methodBuilder("unregister")
+        .addMethod(MethodSpec.methodBuilder("unregisterLocal")
             .addModifiers(Modifier.PUBLIC)
             .returns(void.class)
             .addParameter(Context.class, "context")
             .addStatement("$T.getInstance(context).unregisterReceiver(this)",
                 ClassName.get("android.support.v4.content", "LocalBroadcastManager"))
             .build())
+        .addMethod(MethodSpec.methodBuilder("registerBroad")
+            .addModifiers(Modifier.PUBLIC)
+            .returns(void.class)
+            .addParameter(Context.class, "context")
+            .addStatement("context.registerReceiver(this, filter())")
+            .build())
+        .addMethod(MethodSpec.methodBuilder("registerBroad")
+            .addModifiers(Modifier.PUBLIC)
+            .returns(void.class)
+            .addParameter(Context.class, "context")
+            .addParameter(String.class, "broadcastPermission")
+            .addParameter(Handler.class, "handler")
+            .addStatement("context.registerReceiver(this, filter(), broadcastPermission, handler)")
+            .build())
+        .addMethod(MethodSpec.methodBuilder("unregisterBroad")
+            .addModifiers(Modifier.PUBLIC)
+            .returns(void.class)
+            .addParameter(Context.class, "context")
+            .addStatement("context.unregisterReceiver(this)")
+            .build())
         .build();
+  }
+
+  void printMessage(Diagnostic.Kind kind, String message) {
+    log.printMessage(kind, "DroidCook ActionProcessor: " + message);
+  }
+
+  void printMessage(Diagnostic.Kind kind, String message, Element el) {
+    log.printMessage(kind, "DroidCook ActionProcessor: " + message, el);
   }
 }

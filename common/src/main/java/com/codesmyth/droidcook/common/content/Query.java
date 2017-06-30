@@ -6,17 +6,20 @@ import android.content.CursorLoader;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import com.codesmyth.droidcook.common.util.Strings;
+import com.codesmyth.droidcook.common.Strings;
 import java.util.ArrayList;
 import java.util.List;
 
+@SuppressWarnings("unused")
 public final class Query {
 
   private Query() {
   }
+
   public static Builder builder() {
     return new Builder();
   }
+
   static Bundle getBundle(Cursor cur) {
     Bundle row = new Bundle();
     getBundleInto(row, cur);
@@ -127,7 +130,7 @@ public final class Query {
           c.close();
         }
       }
-      return Strings.of(result);
+      return Strings.nullToEmpty(result);
     }
 
     public ArrayList<String> getStringArrayList(Context context, int columnIndex) {
@@ -137,7 +140,7 @@ public final class Query {
         c = exec(context);
         if (c != null) {
           while (c.moveToNext()) {
-            result.add(Strings.of(c.getString(columnIndex)));
+            result.add(Strings.nullToEmpty(c.getString(columnIndex)));
           }
         }
       } finally {

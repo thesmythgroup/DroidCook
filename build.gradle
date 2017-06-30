@@ -31,6 +31,20 @@ ext.acl = {
 
     lintOptions { abortOnError false }
 }
+ext.pub = {
+    publications {
+        "$project.name"(MavenPublication) {
+            groupId project.group
+            artifactId "$project.name"
+            from components.java
+        }
+    }
+    repositories {
+        maven {
+            url "$buildDir/repo"
+        }
+    }
+}
 
 allprojects {
     repositories {
@@ -39,7 +53,7 @@ allprojects {
     }
 
     group = "com.codesmyth.droidcook"
-    version = "0.4.2"
+    version = "0.6.2"
 }
 
 subprojects {

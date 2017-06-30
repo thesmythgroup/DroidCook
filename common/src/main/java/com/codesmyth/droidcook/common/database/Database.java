@@ -3,33 +3,32 @@ package com.codesmyth.droidcook.common.database;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-
-import com.codesmyth.droidcook.common.util.Strings;
+import com.codesmyth.droidcook.common.IO;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 
+@SuppressWarnings("unused")
 public abstract class Database extends SQLiteOpenHelper {
 
-  private final Context mContext;
-  private final int     mRawId;
+  private final Context context;
+  private final int rawId;
 
   public Database(Context context) {
     super(context, "db.db", null, 0);
-    throw new UnsupportedOperationException("This library class does not implement this constructor.");
+    throw new UnsupportedOperationException(
+        "This library class does not implement this constructor.");
   }
 
   public Database(Context context, String name, int version, int rawId) {
     super(context, name, null, version);
-    mContext = context;
-    mRawId = rawId;
+    this.context = context;
+    this.rawId = rawId;
   }
 
   protected String[] schema() throws IOException {
-    InputStream is = mContext.getResources().openRawResource(mRawId);
-    InputStreamReader isr = new InputStreamReader(is);
-    String schema = Strings.read(isr);
-    isr.close();
+    InputStream is = context.getResources().openRawResource(rawId);
+    byte[] bin = IO.readAll(is);
+    String schema = new String(bin);
     is.close();
     return schema.split("\n");
   }

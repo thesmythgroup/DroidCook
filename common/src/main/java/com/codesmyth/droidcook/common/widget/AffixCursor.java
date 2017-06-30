@@ -36,10 +36,6 @@ import java.util.Map;
  *   getCursor().getViewType(position);
  *   }
  * </pre>
- *
- * @see com.codesmyth.droidcook.common.widget.FragmentPagerCursorAdapter
- * @see com.codesmyth.droidcook.common.widget.PagerCursorAdapter
- * @see RecyclerCursorAdapterCompat
  */
 @SuppressWarnings("unused")
 public class AffixCursor implements Serializable {

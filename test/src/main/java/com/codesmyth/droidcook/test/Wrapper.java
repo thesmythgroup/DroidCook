@@ -1,15 +1,15 @@
 package com.codesmyth.droidcook.test;
 
-import com.codesmyth.droidcook.api.Event;
+import com.codesmyth.droidcook.api.Bundler;
 
 public interface Wrapper {
 
-  @Event
+  @Bundler
   interface Zero {
     int id();
   }
 
-  @Event
+  @Bundler
   interface One {
     int id();
   }

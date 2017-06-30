@@ -6,17 +6,19 @@ import android.database.Cursor;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 
+@SuppressWarnings("unused")
 @TargetApi(12)
 public abstract class CursorAdapter extends RecyclerView.Adapter<ViewBinder> {
 
   public abstract Cursor exec();
 
-  private AffixCursor  mCursor;
+  private AffixCursor mCursor;
   private RecyclerView mRecycler;
 
   private View.OnAttachStateChangeListener mAttachListener = new View.OnAttachStateChangeListener() {
     @Override
-    public void onViewAttachedToWindow(View view) {}
+    public void onViewAttachedToWindow(View view) {
+    }
 
     @Override
     public void onViewDetachedFromWindow(View view) {
@@ -70,7 +72,8 @@ public abstract class CursorAdapter extends RecyclerView.Adapter<ViewBinder> {
 
   public void refresh() {
     if (mRecycler == null) {
-      throw new IllegalStateException("AsyncCursorAdapter not attached to a RecyclerView; wont be able to finalize cursor.");
+      throw new IllegalStateException(
+          "AsyncCursorAdapter not attached to a RecyclerView; wont be able to finalize cursor.");
     }
 
     Cursor prev = mCursor.mCursor;

@@ -1,8 +1,8 @@
 package com.codesmyth.droidcook.test;
 
-import com.codesmyth.droidcook.api.Event;
+import com.codesmyth.droidcook.api.Bundler;
 
-@Event
+@Bundler
 public abstract class Data {
 	public abstract String key();
 	public abstract long val();
