@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Handler;
 import com.codesmyth.droidcook.api.Action;
+import com.codesmyth.droidcook.api.Bundler;
 import com.google.auto.service.AutoService;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
@@ -152,6 +153,10 @@ public class ActionProcessor extends AbstractProcessor {
     code.beginControlFlow("switch (intent.getAction())");
 
     for (ExecutableElement method : execMap.get(el)) {
+      if (null != el.getAnnotation(Bundler.class) && !method.getModifiers().contains(Modifier.DEFAULT)) {
+        throwMessage(Diagnostic.Kind.ERROR, "@Action method in @Bundler class requires modifier 'default'", el, method);
+      }
+
       List<? extends VariableElement> params = method.getParameters();
       if (params.size() != 1) {
         printMessage(Kind.WARNING, "@Action method should only have 1 param", method);
@@ -185,10 +190,13 @@ public class ActionProcessor extends AbstractProcessor {
         .addStatement("$T filter = new $T()", IntentFilter.class, IntentFilter.class);
 
     for (ExecutableElement method : execMap.get(el)) {
+      if (null != el.getAnnotation(Bundler.class) && !method.getModifiers().contains(Modifier.DEFAULT)) {
+        throwMessage(Diagnostic.Kind.ERROR, "@Action method in @Bundler class requires modifier 'default'", el, method);
+      }
+
       List<? extends VariableElement> params = method.getParameters();
       if (params.size() != 1) {
-        printMessage(Diagnostic.Kind.ERROR, "@Action method should only have 1 param", method);
-        throw new ProcessorException("@Action method should only have 1 param");
+        throwMessage(Diagnostic.Kind.ERROR, "@Action method should only have 1 param", el, method);
       }
       code.addStatement("filter.addAction($S)", params.get(0).asType().toString());
     }
@@ -210,14 +218,14 @@ public class ActionProcessor extends AbstractProcessor {
             .returns(void.class)
             .addParameter(Context.class, "context")
             .addStatement("$T.getInstance(context).registerReceiver(this, filter())",
-                ClassName.get("android.support.v4.content", "LocalBroadcastManager"))
+                ClassName.get("androidx.localbroadcastmanager.content", "LocalBroadcastManager"))
             .build())
         .addMethod(MethodSpec.methodBuilder("unregisterLocal")
             .addModifiers(Modifier.PUBLIC)
             .returns(void.class)
             .addParameter(Context.class, "context")
             .addStatement("$T.getInstance(context).unregisterReceiver(this)",
-                ClassName.get("android.support.v4.content", "LocalBroadcastManager"))
+                ClassName.get("androidx.localbroadcastmanager.content", "LocalBroadcastManager"))
             .build())
         .addMethod(MethodSpec.methodBuilder("registerBroad")
             .addModifiers(Modifier.PUBLIC)
@@ -242,11 +250,30 @@ public class ActionProcessor extends AbstractProcessor {
         .build();
   }
 
+  static final String TAG = "DroidCook ActionProcessor: ";
+
   void printMessage(Diagnostic.Kind kind, String message) {
-    log.printMessage(kind, "DroidCook ActionProcessor: " + message);
+    log.printMessage(kind, TAG + message);
   }
 
   void printMessage(Diagnostic.Kind kind, String message, Element el) {
-    log.printMessage(kind, "DroidCook ActionProcessor: " + message, el);
+    log.printMessage(kind, TAG + message, el);
+  }
+
+  void throwMessage(Diagnostic.Kind kind, String message) throws ProcessorException {
+    log.printMessage(kind, TAG + message);
+    throw new ProcessorException(TAG + message);
+  }
+
+  void throwMessage(Diagnostic.Kind kind, String message, Element el) throws ProcessorException {
+    String msg = TAG + message + ": " + el;
+    log.printMessage(kind, msg);
+    throw new ProcessorException(msg);
+  }
+
+  void throwMessage(Diagnostic.Kind kind, String message, Element el, Element method) throws ProcessorException {
+    String msg = TAG + message + ": " + el + "." + method;
+    log.printMessage(kind, msg);
+    throw new ProcessorException(msg);
   }
 }

@@ -30,22 +30,22 @@ public final class Query {
     for (int j = 0; j < cur.getColumnCount(); j++) {
       String name = cur.getColumnName(j);
       switch (cur.getType(j)) {
-        case Cursor.FIELD_TYPE_BLOB:
-          out.putByteArray(name, cur.getBlob(j));
-          break;
-        case Cursor.FIELD_TYPE_FLOAT:
-          out.putFloat(name, cur.getFloat(j));
-          break;
-        case Cursor.FIELD_TYPE_INTEGER:
-          out.putInt(name, cur.getInt(j));
-          break;
-        case Cursor.FIELD_TYPE_STRING:
-          out.putString(name, cur.getString(j));
-          break;
-        case Cursor.FIELD_TYPE_NULL:
-          break;
-        default:
-          throw new RuntimeException("Unsupported field type: " + cur.getType(j));
+      case Cursor.FIELD_TYPE_BLOB:
+        out.putByteArray(name, cur.getBlob(j));
+        break;
+      case Cursor.FIELD_TYPE_FLOAT:
+        out.putFloat(name, cur.getFloat(j));
+        break;
+      case Cursor.FIELD_TYPE_INTEGER:
+        out.putInt(name, cur.getInt(j));
+        break;
+      case Cursor.FIELD_TYPE_STRING:
+        out.putString(name, cur.getString(j));
+        break;
+      case Cursor.FIELD_TYPE_NULL:
+        break;
+      default:
+        throw new RuntimeException("Unsupported field type: " + cur.getType(j));
       }
     }
   }
@@ -73,12 +73,17 @@ public final class Query {
       return this;
     }
 
-    public Builder args(Object... x) {
-      ArrayList<String> args = new ArrayList<>(x.length);
+    public Builder args(String... x) {
+      mWhereArgs = x;
+      return this;
+    }
+
+    public Builder args(Iterable x) {
+      ArrayList<String> args = new ArrayList<>();
       for (Object e : x) {
         args.add(String.valueOf(e));
       }
-      mWhereArgs = args.toArray(new String[x.length]);
+      mWhereArgs = args.toArray(new String[args.size()]);
       return this;
     }
 
@@ -91,10 +96,10 @@ public final class Query {
       return context.getContentResolver().query(mFrom, mSelect, mWhere, mWhereArgs, mOrderBy);
     }
 
-    public android.support.v4.content.CursorLoader cursorLoaderCompat(Context context) {
-      return new android.support.v4.content.CursorLoader(context, mFrom, mSelect, mWhere,
-          mWhereArgs, mOrderBy);
-    }
+    //public android.support.v4.content.CursorLoader cursorLoaderCompat(Context context) {
+    //  return new android.support.v4.content.CursorLoader(context, mFrom, mSelect, mWhere,
+    //      mWhereArgs, mOrderBy);
+    //}
 
     @TargetApi(11)
     public CursorLoader cursorLoader(Context context) {

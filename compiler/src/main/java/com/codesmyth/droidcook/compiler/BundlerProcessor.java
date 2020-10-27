@@ -53,8 +53,8 @@ public class BundlerProcessor extends AbstractProcessor {
   // TODO serializable, sparsearray, non-primitive list types; specify preferred/weighted order.
 
   private ClassName parcelableCreatorName = ClassName.get("android.os", "Parcelable.Creator");
-  private ClassName localBroadcastManagerName = ClassName.get("android.support.v4.content", "LocalBroadcastManager");
-  private ClassName fragmentName = ClassName.get("android.support.v4.app", "Fragment");
+  private ClassName localBroadcastManagerName = ClassName.get("androidx.localbroadcastmanager.content", "LocalBroadcastManager");
+  private ClassName fragmentName = ClassName.get("androidx.fragment.app", "Fragment");
 
   @Override
   public synchronized void init(ProcessingEnvironment processingEnv) {
@@ -107,7 +107,7 @@ public class BundlerProcessor extends AbstractProcessor {
     ClassName className = ClassName.bestGuess(el.getSimpleName() + "Bundler");
 
     TypeSpec.Builder builder = TypeSpec.classBuilder(className.simpleName())
-        .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
+        .addModifiers(Modifier.PUBLIC) //, Modifier.FINAL)
         .addSuperinterface(mirrorToName(parcelableType));
     if (el.getKind().isInterface()) {
       builder.addSuperinterface(parentName);
@@ -187,6 +187,12 @@ public class BundlerProcessor extends AbstractProcessor {
     for (Element en : el.getEnclosedElements()) {
       if (en.getKind() != ElementKind.METHOD) {
         continue;
+      }
+      if (en.getModifiers().contains(Modifier.DEFAULT)) {
+        continue; // skip java8 default method in interface
+      }
+      if (en.getModifiers().contains(Modifier.STATIC)) {
+        continue; // skip java8 static method in interface
       }
       if (el.getKind().isClass() && !en.getModifiers().contains(Modifier.ABSTRACT)) {
         continue;

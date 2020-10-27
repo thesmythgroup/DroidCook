@@ -3,8 +3,8 @@ package com.codesmyth.droidcook.common.widget;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.database.Cursor;
-import android.support.v7.widget.RecyclerView;
 import android.view.View;
+import androidx.recyclerview.widget.RecyclerView;
 
 @SuppressWarnings("unused")
 @TargetApi(12)
@@ -52,12 +52,12 @@ public abstract class CursorAdapter extends RecyclerView.Adapter<ViewBinder> {
   }
 
   @Override
-  public void onBindViewHolder(ViewBinder holder, int position) {
+  public void onBindViewHolder(ViewBinder binder, int position) {
 // TODO(d) isNullOrEmpty before a moveToPositionOrThrow seems counter-intuitive. wrt empty views
 //    if (!mCursor.isNullOrEmpty() && mCursor.getDomain().test(position) == AffixCursor.Domain.NO_MATCH) {
 //      mCursor.moveToPositionOrThrow(position);
 //    }
-    holder.bind(mCursor, position);
+    binder.bind(mCursor, position);
   }
 
   @Override
@@ -72,8 +72,7 @@ public abstract class CursorAdapter extends RecyclerView.Adapter<ViewBinder> {
 
   public void refresh() {
     if (mRecycler == null) {
-      throw new IllegalStateException(
-          "AsyncCursorAdapter not attached to a RecyclerView; wont be able to finalize cursor.");
+      throw new IllegalStateException("CursorAdapter not attached to a RecyclerView; wont be able to finalize cursor.");
     }
 
     Cursor prev = mCursor.mCursor;

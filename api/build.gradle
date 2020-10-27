@@ -1,1 +1,21 @@
 apply plugin: "java"
+apply plugin: "maven-publish"
+apply plugin: "com.jfrog.bintray"
+project.sourceCompatibility = rootProject.ext.srcCompat
+project.bintray rootProject.ext.bintray
+publishing {
+    publications {
+        "$project.name"(MavenPublication) {
+            groupId project.group
+            artifactId "$project.name"
+            from components.java
+        }
+    }
+    repositories {
+        maven {
+            url "$buildDir/repo"
+        }
+    }
+}
+dependencies {
+}

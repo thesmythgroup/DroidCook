@@ -1,11 +1,16 @@
 apply plugin: "com.android.application"
 
+project.android rootProject.ext.acl
+
 android {
     defaultConfig { applicationId "com.codesmyth.droidcook.test" }
 }
 
 dependencies {
-    compile project(':api')
-    compile project(':common')
+    implementation "androidx.appcompat:appcompat:1.0.2"
+    implementation "androidx.recyclerview:recyclerview:1.0.0"
+
+    implementation project(':api')
+    implementation project(':common')
     annotationProcessor project(':compiler')
 }

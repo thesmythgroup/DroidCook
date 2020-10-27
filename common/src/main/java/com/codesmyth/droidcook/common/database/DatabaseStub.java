@@ -8,18 +8,18 @@ import java.io.IOException;
 import java.io.InputStream;
 
 @SuppressWarnings("unused")
-public abstract class Database extends SQLiteOpenHelper {
+public abstract class DatabaseStub extends SQLiteOpenHelper {
 
   private final Context context;
   private final int rawId;
 
-  public Database(Context context) {
+  public DatabaseStub(Context context) {
     super(context, "db.db", null, 0);
     throw new UnsupportedOperationException(
         "This library class does not implement this constructor.");
   }
 
-  public Database(Context context, String name, int version, int rawId) {
+  public DatabaseStub(Context context, String name, int version, int rawId) {
     super(context, name, null, version);
     this.context = context;
     this.rawId = rawId;
@@ -38,8 +38,10 @@ public abstract class Database extends SQLiteOpenHelper {
     db.beginTransaction();
     try {
       StringBuilder sb = new StringBuilder();
-      for (String stmt : schema()) {
-        if (!stmt.startsWith("--") && !stmt.trim().equals("")) {
+      for (String line : schema()) {
+        String stmt = line.trim();
+        if (!stmt.startsWith("--") && !stmt.equals("")) {
+          sb.append(' ');
           sb.append(stmt);
           if (stmt.endsWith(";")) {
             db.execSQL(sb.toString());

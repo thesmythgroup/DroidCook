@@ -1,20 +1,24 @@
 apply plugin: "com.android.library"
+apply plugin: "maven-publish"
+apply plugin: "com.jfrog.bintray"
+
+project.bintray rootProject.ext.bintray
+project.android rootProject.ext.acl
 
 dependencies {
-    compile "javax.inject:javax.inject:1"
-    compile "com.android.support:appcompat-v7:$rootProject.ext.supportLib"
-    compile "com.android.support:support-v4:$rootProject.ext.supportLib"
-    compile "com.android.support:recyclerview-v7:$rootProject.ext.supportLib"
+    implementation "javax.inject:javax.inject:1"
+    implementation "androidx.appcompat:appcompat:1.0.2"
+    implementation "androidx.recyclerview:recyclerview:1.0.0"
 }
 
 task sourceJar(type: Jar) {
     from android.sourceSets.main.java.srcDirs
-    classifier "source"
+    classifier "sources"
 }
 
 publishing {
     publications {
-        common(MavenPublication) {
+        "$project.name"(MavenPublication) {
             groupId project.group
             artifactId project.name
             artifact(sourceJar)

@@ -2,14 +2,28 @@ package com.codesmyth.droidcook.test;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Toast;
 import com.codesmyth.droidcook.api.Action;
 import com.codesmyth.droidcook.api.Bundler;
 import com.codesmyth.droidcook.test.Wrapper.Zero;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
+ * TODO use Bundler for shared preferences.
+ * TODO consider renaming ACTION on Bundler to ID and/or make available as Uri for database query.
+ * or rather, CONTENT instead of ID, but needs an authority ...
+ * TODO create defaultValues() method that will set every entry in the underlying Bundle to
+ * the java language default value for type, e.g. null, 0, etc.
+ * such a method would likely get used in conjunction with replacing rows where no original
+ * row data should remain but we also want to query what all the keys are (field name being
+ * after last period in key).
+ * ...
+ * maybe just be better to provide a keySet() method returning all the field names
+ * ... underlying Bundle has a keySet method ...
+ *
  * TODO consider following developments
  * So, @Action is only ever specified on a presenter; never a view.
  * Action bundles are data-sources, reversed; determines how view will be shown.
@@ -43,6 +57,8 @@ public class MainActivity extends Activity implements OnClickListener {
 
   private MainActivityReceiver receiver = new MainActivityReceiver(this);
 
+  ValueToaster value = new ValueToaster();
+
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -50,25 +66,29 @@ public class MainActivity extends Activity implements OnClickListener {
     findViewById(R.id.click_me).setOnClickListener(this);
     findViewById(R.id.throw_exception).setOnClickListener(this);
     receiver.registerLocal(this);
+    value.receiver.registerLocal(this);
 
     new ZeroBundler()
         .setId(0)
         .localcast(this);
+
+    value.setValue(3).localcast(this);
   }
 
   @Override
   protected void onDestroy() {
     super.onDestroy();
     receiver.unregisterLocal(this);
+    value.receiver.unregisterLocal(this);
   }
 
   @Override
   public void onClick(View v) {
     switch (v.getId()) {
     case R.id.click_me:
-      new InformBundler()
-          .setMessage("Inform")
-          .localcast(this);
+      InformBundler b = Inform.bundler().setId(4);
+      b.setMessage("Squared ID: " + b.squaredString());
+      b.localcast(this);
       break;
     case R.id.throw_exception:
       try {
@@ -93,49 +113,28 @@ public class MainActivity extends Activity implements OnClickListener {
     Toast.makeText(this, "" + ev.id(), Toast.LENGTH_SHORT).show();
   }
 
-  /**
-   * ACTION = "package.GoBackAction";
-   * GoBackAction.broadcast(context);
-   */
-  @Action
-  public void goBack() {
-    // ...
-  }
-
-  /**
-   * ACTION = "package.GoBackInformAction";
-   * GoBackInformAction.broadcast(context, inform);
-   *
-   * // this builds nice hierarchy; good namespace properties.
-   * // but, if Inform.broadcast behavior preserved, then receiver
-   * // must match multiple actions to this method. ??? OK ???
-   * //
-   * // not nice with minor redundancy "Inform" and "inform". meh
-   * ACTION = "package.GoBackAction.Inform";
-   * GoBackAction.Inform.broadcast(context, inform);
-   *
-   * // pursuing this style decouples much of the app implementation.
-   * // must still address click listeners.
-   * // for empty arguments, onClick only needs ACTION string and
-   * // could simply broadcast; decoupling further.
-   * // for arguments, ??? bundlers could be set on databinding values ???
-   *
-   * // TODO generate xml strings of all ACTION values.
-   */
-  @Action
-  void goBack(Inform ev) {
-    // ...
-  }
-
   @Bundler
-  interface Foo {
-    int bar();
+  interface Value {
+    int value();
 
-    /**
-     * this is where things get weird ...
-     * and pointless ... TODO disallow
-     */
     @Action
-    void baz();
+    default void action(Value val) {
+      Log.d("@@@", "Value.value() is " + val.value());
+    }
+  }
+
+  AtomicBoolean once = new AtomicBoolean(false);
+
+  class ValueToaster extends ValueBundler {
+    ValueReceiver receiver = new ValueReceiver(this);
+
+    @Override
+    public void action(Value a) {
+      super.action(a);
+      Toast.makeText(MainActivity.this, "value() is " + a.value(), Toast.LENGTH_LONG).show();
+      if (once.compareAndSet(false, true)) {
+        setValue(value() + a.value()).localcast(MainActivity.this);
+      }
+    }
   }
 }

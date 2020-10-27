@@ -2,18 +2,20 @@
 // http://google.github.io/android-gradle-dsl/current/
 
 buildscript {
-    repositories { jcenter() }
+    repositories {
+        google()
+        jcenter()
+    }
     dependencies {
-        classpath "com.android.tools.build:gradle:2.3.2"
+        classpath 'com.android.tools.build:gradle:3.2.1'
         classpath "com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7.3"
     }
 }
 
-ext.srcCompat = 1.7
-ext.supportLib = "25.3.1"
+ext.srcCompat = 1.8
+
 ext.acl = {
-    compileSdkVersion 25
-    buildToolsVersion "25.0.2"
+    compileSdkVersion 28
 
     compileOptions {
         sourceCompatibility rootProject.ext.srcCompat
@@ -22,7 +24,7 @@ ext.acl = {
 
     defaultConfig {
         minSdkVersion 19
-        targetSdkVersion 25
+        targetSdkVersion 28
         versionCode 1
         versionName "1.0"
     }
@@ -31,75 +33,26 @@ ext.acl = {
 
     lintOptions { abortOnError false }
 }
-ext.pub = {
-    publications {
-        "$project.name"(MavenPublication) {
-            groupId project.group
-            artifactId "$project.name"
-            from components.java
-        }
-    }
-    repositories {
-        maven {
-            url "$buildDir/repo"
-        }
+
+ext.bintray = {
+    user = System.getenv("BINTRAY_USER")
+    key = System.getenv("BINTRAY_KEY")
+    publications = ["$project.name"]
+    pkg {
+        repo = "maven"
+        name = "droidcook"
+        licenses = ["BSD 2-clause"]
+        vcsUrl = "https://github.com/thesmythgroup/DroidCook.git"
     }
 }
 
 allprojects {
     repositories {
+        google()
         jcenter()
         mavenCentral()
     }
 
     group = "com.codesmyth.droidcook"
-    version = "0.6.2"
-}
-
-subprojects {
-    plugins.withId("com.android.application") {
-        project.android rootProject.ext.acl
-    }
-
-    plugins.withId("com.android.library") {
-        project.android rootProject.ext.acl
-    }
-
-    plugins.withType(JavaPlugin) {
-        project.sourceCompatibility = rootProject.ext.srcCompat
-
-        publishing {
-            publications {
-                "$project.name"(MavenPublication) {
-                    groupId project.group
-                    artifactId "$project.name"
-                    from components.java
-                }
-            }
-            repositories {
-                maven {
-                    url "$buildDir/repo"
-                }
-            }
-        }
-    }
-
-    if (project.name == "test") {
-        return
-    }
-
-    apply plugin: "maven-publish"
-    apply plugin: "com.jfrog.bintray"
-
-    bintray {
-        user = System.getenv("BINTRAY_USER")
-        key = System.getenv("BINTRAY_KEY")
-        publications = ["$project.name"]
-        pkg {
-            repo = "maven"
-            name = "droidcook"
-            licenses = ["BSD 2-clause"]
-            vcsUrl = "https://github.com/dskinner/DroidCook.git"
-        }
-    }
+    version = "0.7.0"
 }
